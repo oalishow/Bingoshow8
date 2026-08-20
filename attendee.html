@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bingo Show - Painel do Público</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    
+    <style>
+        :root {
+            --color-bg: #f8fafc;
+            --color-card: #ffffff;
+            --color-border: #e2e8f0;
+            --color-text: #0ea5e9;
+        }
+        .dark {
+            --color-bg: #060a16;
+            --color-card: #0d1527;
+            --color-border: #1a2744;
+            --color-text: #38bdf8;
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                bg: 'var(--color-bg)',
+                card: 'var(--color-card)',
+                border: 'var(--color-border)',
+                text: 'var(--color-text)'
+              }
+            },
+            animation: {
+              'bounce-in': 'bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both',
+              'fade-in': 'fadeIn 0.5s ease-out both',
+            },
+            keyframes: {
+              bounceIn: {
+                '0%': { transform: 'scale(0)', opacity: '0' },
+                '50%': { transform: 'scale(1.1)' },
+                '100%': { transform: 'scale(1)', opacity: '1' },
+              },
+              fadeIn: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body class="bg-brand-bg text-slate-800 dark:text-white font-sans min-h-screen flex flex-col p-2 sm:p-4">
+    <div class="w-full flex-1 flex flex-col max-w-lg mx-auto gap-3 sm:gap-4">
+        
+        
+        <canvas id="confetti-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-50"></canvas>
+        
+        <!-- Beautiful Waiting Screen -->
+        <div id="attendee-waiting-screen" class="hidden flex-1 flex-col items-center justify-center w-full min-h-[70vh] animate-fade-in p-4 text-center">
+            <img id="waiting-logo" src="" alt="Logo" class="h-32 w-auto hidden object-contain mb-6 drop-shadow-xl animate-bounce-in" />
+            <h1 id="waiting-app-name" class="text-3xl sm:text-4xl font-black uppercase tracking-tight text-slate-800 dark:text-white drop-shadow-md mb-2"></h1>
+            
+            <div class="mt-8 bg-brand-card/80 backdrop-blur-md p-6 rounded-3xl border border-brand-border shadow-2xl flex flex-col items-center max-w-sm w-full">
+                <div class="w-16 h-16 rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-sky-500 animate-spin mb-4"></div>
+                <h2 id="waiting-title" class="text-xl font-black text-slate-800 dark:text-white mb-2">Aguardando</h2>
+                <p id="waiting-message" class="text-slate-600 dark:text-slate-400 text-sm font-bold">A próxima rodada começará em breve...</p>
+            </div>
+        </div>
+
+        <div id="attendee-status-banner" class="w-full p-4 text-center text-sm font-bold bg-yellow-900/50 text-yellow-200 rounded-xl shadow-sm border border-yellow-700/50 animate-pulse hidden"></div>
+
+        
+        
+        <div id="attendee-pending-overlay" class="fixed inset-0 bg-brand-bg/90 backdrop-blur-sm z-[80] hidden flex-col items-center justify-center p-4 text-center">
+            <div id="pending-overlay-content" class="animate-bounce-in bg-brand-card rounded-full border-8 border-brand-border shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center w-64 h-64 sm:w-80 sm:h-80 relative overflow-hidden ring-4 ring-brand-text/50">
+                <div class="animate-pulse flex flex-col items-center justify-center w-full h-full"><div id="pending-overlay-msg" class="text-8xl sm:text-9xl font-black text-brand-text drop-shadow-md"></div></div>
+            </div>
+        </div>
+        
+        <div id="attendee-bingo-overlay" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[110] hidden flex-col items-center justify-center p-4 text-center">
+            <div id="bingo-overlay-content" class="animate-bounce-in bg-white dark:bg-slate-800 p-8 sm:p-12 rounded-3xl border-4 border-yellow-400 shadow-[0_0_50px_rgba(250,204,21,0.5)] flex flex-col items-center">
+                <div class="text-6xl sm:text-8xl mb-6 animate-pulse">🎉</div>
+                <h2 id="bingo-overlay-title" class="text-5xl sm:text-7xl font-black uppercase tracking-widest text-yellow-400 mb-4 drop-shadow-md">BINGO!</h2>
+                <div id="bingo-overlay-msg" class="text-xl sm:text-3xl text-slate-800 dark:text-white"></div>
+            </div>
+        </div>
+
+        <div id="attendee-overlay" class="fixed inset-0 bg-brand-bg/90 backdrop-blur-sm z-[90] hidden flex-col items-center justify-center p-4 text-center">
+            <div id="overlay-content" class="animate-bounce-in bg-brand-card p-6 sm:p-8 rounded-2xl border border-brand-border shadow-2xl flex flex-col items-center">
+                <div id="overlay-icon" class="text-4xl sm:text-6xl mb-4"></div>
+                <h2 id="overlay-title" class="text-xl sm:text-2xl font-black uppercase tracking-widest text-brand-text mb-2"></h2>
+                <p id="overlay-msg" class="text-sm sm:text-base text-slate-700 dark:text-slate-300">
+            </div>
+        </div>
+        
+        
+        
+        <button id="top-donate-btn-attendee" class="absolute top-2 left-2 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-full shadow-lg border border-emerald-400/40 flex items-center gap-1.5 z-50 transition-all cursor-pointer hover:scale-105" title="Fazer Doação / Apoiar Instituição">
+            <span>❤️</span>
+            <span class="font-extrabold">Doar / Apoiar</span>
+        </button>
+
+        <button id="attendee-logout-btn" class="absolute top-2 right-22 p-2 text-red-500 hover:text-red-600 transition-colors h-8 w-8 flex items-center justify-center rounded-full bg-brand-card shadow border border-brand-border z-50 hidden" title="Desconectar Conta">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+        </button>
+
+        <button id="show-winners-attendee-btn" class="absolute top-2 right-12 p-2 text-amber-500 hover:text-amber-600 transition-colors h-8 w-8 flex items-center justify-center rounded-full bg-brand-card shadow border border-brand-border z-50" title="Ver Vencedores">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
+        </button>
+
+        <button id="theme-toggle-attendee-btn" class="absolute top-2 right-2 p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors h-8 w-8 flex items-center justify-center rounded-full bg-brand-card shadow border border-brand-border z-50" title="Alternar Modo Claro/Escuro">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+        </button>
+
+        <div id="attendee-content" class="hidden flex-col gap-3 sm:gap-4 w-full animate-fade-in">
+            
+            <!-- Header App Name and Logo -->
+            <div class="text-center mb-1 flex flex-col items-center justify-center">
+                <img id="attendee-logo" src="" alt="Logo" class="h-16 w-auto hidden object-contain mb-2 drop-shadow-md" />
+                <h1 id="attendee-app-name" class="text-2xl font-black uppercase tracking-tight hidden drop-shadow-sm"></h1>
+                <h2 id="attendee-game-name" class="text-sm font-bold text-slate-400 uppercase mt-1 tracking-widest drop-shadow-sm"></h2>
+                
+                <!-- Prêmios -->
+                <div id="attendee-prizes" class="mt-2 text-sm sm:text-base font-bold text-slate-700 dark:text-slate-200 hidden bg-brand-card/50 px-4 py-2 rounded-lg border border-brand-border backdrop-blur-sm"></div>
+                
+                <!-- Botão de Doação em Destaque -->
+                                <!-- Botões de Doação em Destaque -->
+                <div class="mt-2 flex flex-col sm:flex-row justify-center gap-2">
+                    <button id="content-donate-btn-attendee" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white text-xs sm:text-sm font-extrabold rounded-full shadow-lg transition-all border border-amber-400/50 cursor-pointer hover:scale-105 active:scale-95 w-full sm:w-auto">
+                        <span>🤝</span> <span>Apoie a Instituição</span>
+                    </button>
+                    <button id="content-dev-donate-btn-attendee" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs sm:text-sm font-extrabold rounded-full shadow-lg transition-all border border-emerald-400/50 cursor-pointer hover:scale-105 active:scale-95 w-full sm:w-auto">
+                        <span>🚀</span> <span>Apoie o Dev</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Último Sorteado -->
+            <div id="attendee-last-card" class="bg-brand-card border border-brand-border rounded-xl p-4 shadow-lg flex flex-col items-center justify-center relative overflow-hidden transition-colors duration-500 min-h-[140px] sm:min-h-[180px]">
+                <div class="absolute inset-0 bg-white/5 hidden" id="attendee-last-bg"></div>
+                <span id="attendee-last-title" class="absolute top-3 left-3 text-[10px] sm:text-xs font-black text-brand-text uppercase tracking-widest z-10">Último Sorteado</span>
+                
+                <!-- Bola -->
+                <div id="attendee-last-number-ball" class="w-20 h-20 sm:w-28 sm:h-28 rounded-full flex items-center justify-center shadow-2xl border-[4px] border-brand-text transition-colors duration-500 relative overflow-hidden bg-brand-bg my-2">
+                    <div class="absolute inset-0 rounded-full opacity-40 bg-gradient-to-br from-white/60 to-transparent mix-blend-overlay"></div>
+                    <div class="absolute bottom-0 right-0 w-full h-1/2 bg-black/20 rounded-b-full"></div>
+                    <div id="attendee-last-number" class="text-5xl sm:text-7xl font-black text-slate-800 dark:text-white tracking-tighter z-10 drop-shadow-md">- -</div>
+                </div>
+            </div>
+
+            <!-- Últimos 3 Sorteados -->
+            <div class="bg-brand-card border border-brand-border rounded-xl p-3 shadow-lg flex flex-col relative overflow-hidden transition-colors duration-500" id="attendee-recent-card">
+                <span id="attendee-recent-title" class="w-full text-left text-[10px] sm:text-xs font-black text-brand-text uppercase tracking-widest mb-2 z-10">Últimos 3 Sorteados</span>
+                <div id="attendee-recent-numbers" class="bg-brand-bg border border-brand-border rounded-lg p-2 text-center min-h-[40px] sm:min-h-[50px] flex items-center justify-center gap-2 sm:gap-3 z-10 transition-colors duration-500">
+                    <span class="text-slate-500 dark:text-slate-400 font-bold text-xs sm:text-sm">Aguardando sorteio</span>
+                </div>
+            </div>
+
+            <!-- Leilão em Andamento -->
+            <div id="attendee-auction-card" class="hidden bg-brand-card border border-brand-border rounded-xl p-3 shadow-lg flex-col relative overflow-hidden transition-colors duration-500">
+                <span class="w-full text-left text-[10px] sm:text-xs font-black text-amber-500 uppercase tracking-widest mb-2 z-10 flex items-center gap-1">
+                    💎 Leilão
+                </span>
+                <div class="bg-brand-bg border border-brand-border rounded-lg p-3 flex flex-col justify-center items-center z-10 transition-colors duration-500">
+                    <span id="attendee-auction-item" class="text-slate-800 dark:text-white font-bold text-sm sm:text-base text-center">Item</span>
+                    <div class="flex items-baseline gap-2 mt-1">
+                        <span class="text-amber-500 font-bold text-xs">LANCE:</span>
+                        <span id="attendee-auction-bid" class="text-3xl sm:text-4xl font-black text-amber-500 drop-shadow-md transition-all duration-300">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Board (Letras Verticais) -->
+            <div id="attendee-board-rows" class="bg-brand-card border border-brand-border rounded-xl p-2 shadow-lg flex flex-col gap-1.5 sm:gap-2 relative overflow-hidden transition-colors duration-500">
+                <!-- Rows will be injected here -->
+            </div>
+        </div>
+        
+        
+                <footer class="text-center py-6 px-4 text-xs text-slate-500 font-medium flex-shrink-0 relative z-30 bg-brand-card/50 border-t border-brand-border backdrop-blur-sm mt-auto">
+            <p class="max-w-4xl mx-auto">
+                Este programa é o resultado do Trabalho de Conclusão de Curso de <a href="https://www.instagram.com/oalison.rodrigues" target="_blank" class="text-brand-text hover:underline">Alison Fernando Rodrigues dos Santos</a>, sob orientação do <a href="https://www.instagram.com/danilonobresant" target="_blank" class="text-brand-text hover:underline">Prof. Pe. Dr. Danilo Nobre dos Santos</a> Título: "E O VERBO SE FEZ I.A.? DA REFLEXÃO TEOLÓGICA E COMUNICATIVA AO DESENVOLVIMENTO DE SOLUÇÕES PASTORAIS COM INTELIGÊNCIA ARTIFICIAL". (<a href="https://drive.google.com/file/d/14uPBeHCT5aP1ACPLlPpIjfD5J1iLQfyD/view?usp=drive_link" target="_blank" class="text-brand-text hover:underline">Link para acessar</a>)
+                <br><br>
+                Desenvolvido inteiramente com a Inteligência Artificial Gemini 3.1 PRO da Google, este projeto demonstra como é possível criar soluções pastorais inovadoras com criatividade e ferramentas de baixo custo ou gratuitas, mesmo sem conhecimentos prévios em programação.
+            </p>
+            <div class="flex items-center justify-center gap-3 mt-4">
+                <button id="donate-btn-attendee" class="flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold transition-colors shadow-lg text-sm" data-label-key="supportButton">
+                    🤝 <span id="donate-btn-text">Faça sua Doação</span>
+                </button>
+            </div>
+        </footer>
+        
+                <div id="pix-donation-modal-attendee" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[120] flex-col items-center justify-center p-4">
+            <div class="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center relative animate-bounce-in max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-gray-700">
+                <button id="close-donation-btn-attendee" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer bg-slate-100 dark:bg-gray-700 p-1 rounded-full">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                <div class="w-12 h-12 bg-amber-100 dark:bg-amber-900/40 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">🤝</div>
+                <h2 id="donation-modal-title" class="text-2xl font-black text-amber-500 dark:text-amber-400 mb-2">Apoie a Instituição</h2>
+                <p id="donation-modal-desc" class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mb-4">Sua doação ajuda a manter as atividades da instituição. Agradecemos imensamente!</p>
+                <div class="space-y-4 text-left">
+                    <div class="pt-2 border-t border-slate-200 dark:border-gray-700">
+                        <p id="donation-modal-pix-label" class="text-sm font-bold text-gray-900 dark:text-white mb-2 text-center">Doação via PIX</p>
+                        <div class="flex flex-col items-center">
+                            <!-- QR Code PIX -->
+                            <div class="bg-white p-2 rounded-xl shadow border border-slate-200 dark:border-gray-700 mb-3 flex items-center justify-center min-h-[140px] w-[150px]">
+                                <img id="pix-qr-img-attendee" src="" alt="QR Code PIX" class="w-32 h-32 object-contain hidden" />
+                                <div id="pix-qr-placeholder-attendee" class="text-xs text-slate-400 text-center p-2 hidden">
+                                    Carregando QR Code...
+                                </div>
+                            </div>
+                            <div id="pix-key-display-attendee" contenteditable="false" class="w-full bg-slate-100 dark:bg-gray-700 text-slate-800 dark:text-white p-2.5 rounded-lg text-center text-xs font-mono select-all cursor-text border border-slate-200 dark:border-gray-600 truncate mb-2"></div>
+                            <button id="copy-pix-btn-attendee" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg text-xs transition-all shadow flex items-center justify-center gap-1.5 cursor-pointer">📋 Copiar Chave PIX</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+    <div id="attendee-offline-modal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[150] hidden flex-col items-center justify-center p-4 text-center">
+        <div class="animate-bounce-in bg-white dark:bg-slate-800 p-8 rounded-3xl border-2 border-red-500 shadow-2xl flex flex-col items-center justify-center max-w-sm w-full">
+            <div class="text-6xl mb-4">📡</div>
+            <h2 class="text-2xl font-black text-slate-800 dark:text-white mb-2">Conexão Perdida</h2>
+            <p class="text-slate-600 dark:text-slate-300 mb-6">Parece que você perdeu a conexão com a internet ou com o servidor. O painel será atualizado assim que a conexão retornar.</p>
+            <div class="animate-pulse flex items-center justify-center gap-2 text-red-500 font-bold">
+                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                Reconectando...
+            </div>
+        </div>
+    </div>
+
+
+    
+    <div id="attendee-online-modal" class="fixed inset-0 bg-green-900/90 backdrop-blur-md z-[150] hidden flex-col items-center justify-center p-4 text-center">
+        <div class="animate-bounce-in bg-white dark:bg-slate-800 p-8 rounded-3xl border-2 border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.3)] flex flex-col items-center justify-center max-w-sm w-full">
+            <div class="text-6xl mb-4">🟢</div>
+            <h2 class="text-2xl font-black text-slate-800 dark:text-white mb-2">Conexão Restaurada!</h2>
+            <p class="text-slate-600 dark:text-slate-300">O painel foi atualizado.</p>
+        </div>
+    </div>
+
+    <!-- Error Overlay -->
+    <div id="attendee-error-overlay" class="fixed inset-0 bg-brand-bg/90 backdrop-blur-md z-[200] hidden flex-col items-center justify-center p-4 text-center">
+        <div class="bg-brand-card p-8 rounded-3xl border-4 border-red-500 shadow-2xl flex flex-col items-center justify-center max-w-sm w-full">
+            <div class="text-6xl mb-4">⚠️</div>
+            <h2 class="text-2xl font-black text-slate-800 dark:text-white mb-2">Ops!</h2>
+            <p id="attendee-error-message" class="text-slate-600 dark:text-slate-300 font-bold mb-6">Erro desconhecido.</p>
+        </div>
+    </div>
+    
+    <!-- Offline Overlay -->
+    <div id="attendee-offline-overlay" class="fixed inset-0 bg-red-900/90 backdrop-blur-md z-[200] hidden flex-col items-center justify-center p-4 text-center">
+        <div class="animate-pulse bg-white dark:bg-slate-800 p-8 rounded-3xl border-4 border-red-500 shadow-[0_0_50px_rgba(239,68,68,0.5)] flex flex-col items-center justify-center max-w-sm w-full">
+            <div class="text-6xl mb-4">📶</div>
+            <h2 class="text-2xl font-black text-slate-800 dark:text-white mb-2">Conexão Perdida</h2>
+            <p class="text-slate-600 dark:text-slate-300 mb-6 font-bold">Tentando reconectar ao painel do evento...</p>
+            <div class="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-red-500 animate-spin"></div>
+        </div>
+    </div>
+    
+    <!-- Online Reconnected Modal -->
+    <!-- Vencedores Modal -->
+    <div id="attendee-winners-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[60] hidden flex-col items-center justify-center p-4">
+        <div class="bg-brand-card w-full max-w-lg rounded-2xl shadow-xl flex flex-col border border-brand-border max-h-[85vh] overflow-hidden relative">
+            <button id="close-winners-attendee-btn" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors z-10 bg-brand-bg rounded-full p-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <div class="p-6 pb-2 border-b border-brand-border bg-brand-bg">
+                <h3 class="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+                    <span class="text-amber-500">🏆</span> Galeria de Vencedores
+                </h3>
+            </div>
+            <div id="attendee-winners-container" class="p-4 overflow-y-auto flex-1 flex flex-col gap-3">
+                <p class="text-slate-500 text-center italic mt-4">Nenhum vencedor registrado ainda.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão BINGO flutuante no painel -->
+    <button id="attendee-shout-bingo-btn" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[45] px-8 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black text-xl sm:text-2xl rounded-full shadow-[0_0_20px_rgba(225,29,72,0.5)] border-2 border-white/20 transition-transform active:scale-95 cursor-pointer">
+        🚨 BINGO!
+    </button>
+    
+    <!-- Modal de Autenticação para BINGO -->
+    <div id="attendee-auth-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[120] flex-col items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center relative border border-slate-200 dark:border-gray-700">
+            <button id="close-auth-btn" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer p-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-xl font-black text-slate-800 dark:text-white mb-2">Habilitar Botão BINGO</h2>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mb-6">Para sua segurança e validade do prêmio, informe seu CPF antes de entrar.</p>
+            
+            <div id="cpf-section" class="flex flex-col items-center mb-4">
+                <input type="text" id="auth-name-input" placeholder="Nome Completo" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg text-center dark:bg-gray-700 dark:text-white mb-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-lg" />
+                <input type="text" id="auth-cpf-input" placeholder="CPF: 000.000.000-00" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg text-center font-mono dark:bg-gray-700 dark:text-white mb-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-lg" />
+                <label class="flex items-start gap-2 text-left mb-4 cursor-pointer">
+                    <input type="checkbox" id="lgpd-consent-checkbox" class="mt-1 flex-shrink-0" />
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400">Autorizo o uso do meu CPF e nome para fins de validação e registro deste prêmio, de acordo com a LGPD (Lei Geral de Proteção de Dados).</span>
+                </label>
+            </div>
+
+            <div id="auth-providers-section" class="space-y-3 opacity-50 pointer-events-none transition-opacity">
+                <button id="register-anon-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-lg font-bold transition-colors shadow-sm cursor-pointer mb-2 text-lg">
+                    Entrar
+                </button>
+                
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+                    <span class="flex-shrink-0 mx-4 text-gray-400 text-xs font-bold uppercase">Ou</span>
+                    <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+
+                <button id="login-google-btn" class="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 py-2.5 px-4 rounded-lg font-bold transition-colors shadow-sm cursor-pointer pointer-events-auto opacity-100">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Entrar com Google
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Alert Modal -->
+    <div id="attendee-alert-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[250] hidden flex-col items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center border-2 border-emerald-500 animate-bounce-in">
+            <h2 class="text-xl font-black text-slate-800 dark:text-white mb-2">Aviso</h2>
+            <p id="attendee-alert-message" class="text-slate-600 dark:text-slate-300 mb-6"></p>
+            <button id="attendee-alert-ok-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-transform active:scale-95">OK</button>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="attendee-confirm-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[250] hidden flex-col items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center border-2 border-amber-500 animate-bounce-in">
+            <div class="text-4xl mb-4">⚠️</div>
+            <h2 class="text-xl font-black text-slate-800 dark:text-white mb-2">Atenção</h2>
+            <p id="attendee-confirm-message" class="text-slate-600 dark:text-slate-300 mb-6"></p>
+            <div class="flex gap-3">
+                <button id="attendee-confirm-cancel-btn" class="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-800 dark:text-white font-bold py-3 px-4 rounded-xl transition-colors">Cancelar</button>
+                <button id="attendee-confirm-ok-btn" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-transform active:scale-95">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dev-donation-modal-attendee" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[200] hidden backdrop-blur-sm transition-opacity">
+        <div class="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full text-center relative animate-bounce-in max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-gray-700">
+            <button id="close-dev-donation-btn-attendee" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer bg-slate-100 dark:bg-gray-700 p-1 rounded-full">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">☕</div>
+            <h2 class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mb-1">Apoie o Desenvolvedor</h2>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mb-4">Ajude a manter o projeto Bingo Show atualizado e colabore com o desenvolvedor!</p>
+            
+            <div class="space-y-4">
+                <!-- OPÇÃO 1: PIX DEV COM QR CODE -->
+                <div class="border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/50 dark:bg-emerald-950/20 p-4 rounded-xl text-left">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded">Opção 1</span>
+                        <span class="text-sm font-bold text-slate-800 dark:text-white">Doação via PIX (Dev)</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="bg-white p-2 rounded-xl shadow border border-slate-200 dark:border-gray-700 mb-2 flex items-center justify-center min-h-[130px] w-[140px]">
+                            <img id="dev-pix-qr-img-attendee" src="" alt="QR Code PIX Dev" class="w-28 h-28 object-contain hidden" />
+                            <div id="dev-pix-qr-placeholder-attendee" class="text-xs text-slate-400 text-center p-2 hidden">
+                                Carregando QR...
+                            </div>
+                        </div>
+                        <div id="dev-pix-key-display-attendee" class="w-full bg-white dark:bg-gray-700 text-slate-800 dark:text-white p-2 rounded-lg text-center text-xs font-mono select-all cursor-text border border-slate-200 dark:border-gray-600 truncate mb-2"></div>
+                        <button id="copy-dev-pix-btn-attendee" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-lg text-xs transition-all shadow flex items-center justify-center gap-1.5 cursor-pointer">📋 Copiar Chave PIX</button>
+                    </div>
+                </div>
+
+                <!-- OPÇÃO 2: PAYPAL DEV COM QR CODE E BOTÃO -->
+                <div class="border border-blue-200 dark:border-blue-800/60 bg-blue-50/50 dark:bg-blue-950/20 p-4 rounded-xl text-left">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider bg-blue-600 text-white px-2 py-0.5 rounded">Opção 2</span>
+                        <span class="text-sm font-bold text-slate-800 dark:text-white">Doação via PayPal (Dev)</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="bg-white p-2 rounded-xl shadow border border-slate-200 dark:border-gray-700 mb-2 flex items-center justify-center min-h-[130px] w-[140px]">
+                            <img id="dev-paypal-qr-img-attendee" src="" alt="QR Code PayPal Dev" class="w-28 h-28 object-contain hidden" />
+                            <div id="dev-paypal-qr-placeholder-attendee" class="text-xs text-slate-400 text-center p-2 hidden">
+                                Carregando QR PayPal...
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-600 dark:text-slate-400 text-center mb-3">Escaneie o QR Code ou clique no botão abaixo para doar pelo PayPal:</p>
+                        <div class="flex justify-center w-full">
+                            <a id="dev-paypal-link-btn-attendee" href="https://www.paypal.com/donate/?hosted_button_id=WJBLF3LV3RZRW" target="_blank" rel="noopener noreferrer" class="w-full text-center inline-flex items-center justify-center gap-2 bg-[#0070BA] hover:bg-[#003087] text-white font-bold py-2.5 px-4 rounded-lg text-xs shadow transition-all cursor-pointer">
+                                <span>💳</span> <span>Doar com PayPal</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script type="module" src="/attendee.tsx"></script>
+</body>
+</html>

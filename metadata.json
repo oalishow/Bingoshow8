@@ -1,0 +1,8 @@
+{
+  "name": "Remix BINGOSHOW 7.8",
+  "description": "Programa avançado para Show de Prêmios em Paróquias e organizações beneficentes",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

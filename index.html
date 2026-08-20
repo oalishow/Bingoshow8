@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Show</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/pwa-512x512.png">
+    <link rel="apple-touch-icon" href="/pwa-192x192.png">
+    <meta name="theme-color" content="#1e1b4b">
+    <!-- Carrega o Tailwind CSS para estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+      }
+    </script>
+    <!-- Carrega a fonte Inter do Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Folha de Estilos para Impressão -->
+    <link rel="stylesheet" href="print.css" media="print">
+    <style>
+        /* Estilos personalizados */
+        body { font-family: 'Inter', sans-serif; }
+
+        /* Animações */
+        @keyframes logo-float-glow {
+          0%, 100% {
+            transform: translateY(0) scale(1);
+            filter: drop-shadow(0 0 5px #f59e0b);
+          }
+          50% {
+            transform: translateY(-10px) scale(1.05);
+            filter: drop-shadow(0 0 15px #fbbf24) drop-shadow(0 0 25px #f59e0b);
+          }
+        }
+        .logo-animation {
+            animation: logo-float-glow 4s ease-in-out infinite;
+        }
+
+        @keyframes bounce-in {
+            0% { transform: translateY(-200px) scale(0.5); opacity: 0; }
+            50% { transform: translateY(0) scale(1.1); opacity: 1; }
+            70% { transform: translateY(-30px) scale(0.95); }
+            90% { transform: translateY(0) scale(1.05); }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .animate-bounce-in { animation: bounce-in 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; }
+
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pop-up { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
+        .modal-content { animation: pop-up 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+        
+        @keyframes shake-error {
+            10%, 90% { transform: translateX(-1px); }
+            20%, 80% { transform: translateX(2px); }
+            30%, 50%, 70% { transform: translateX(-4px); }
+            40%, 60% { transform: translateX(4px); }
+        }
+        .animate-shake-error { animation: shake-error 0.82s cubic-bezier(.36,.07,.19,.97) both; }
+        
+        /* Estilo para Rodada Concluída (cinza/opaca) */
+        .game-completed-style {
+            opacity: 0.5;
+            background-color: #374151 !important; /* Cor de fundo cinza escuro */
+            border: 1px solid #4b5563;
+            transition: all 0.5s;
+        }
+        
+        .animate-flash-complete { animation: flash-complete-dark 1s ease-out; }
+        @keyframes flash-complete-dark {
+            0%, 100% { background-color: #1f2937; }
+            50% { background-color: #10b981; }
+        }
+        
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up { animation: fade-in-up 0.5s ease-out forwards; }
+        
+        /* NOVA ANIMAÇÃO PARA RODADA EXTRA */
+        @keyframes fade-in-down {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-down { animation: fade-in-down 0.5s ease-out forwards; }
+        
+        /* ANIMAÇÃO VIBRANTE PARA BRINDE SORTEADO */
+        @keyframes pulse-glow {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 5px 2px rgba(255, 255, 255, 0.2);
+                filter: brightness(1);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 30px 15px rgba(255, 255, 255, 0.8), 0 0 50px 10px rgba(253, 224, 71, 0.6);
+                filter: brightness(1.5) saturate(1.2);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 5px 2px rgba(255, 255, 255, 0.2);
+                filter: brightness(1);
+            }
+        }
+        .pulse-glow-animation {
+            animation: pulse-glow 2.5s ease-in-out infinite;
+        }
+
+        /* ANIMAÇÃO CELEBRATÓRIA PARA CARTELA SORTEADA */
+        @keyframes lucky-card-float {
+            0% { transform: translateY(0) rotate(0deg) scale(1); }
+            25% { transform: translateY(-10px) rotate(2deg) scale(1.05); }
+            50% { transform: translateY(0) rotate(-2deg) scale(1.1); }
+            75% { transform: translateY(5px) rotate(1deg) scale(1.05); }
+            100% { transform: translateY(0) rotate(0deg) scale(1); }
+        }
+        .animate-lucky-card {
+            animation: lucky-card-float 3s ease-in-out infinite !important;
+            box-shadow: 0 0 50px 20px rgba(255, 255, 255, 0.5), 0 0 100px 40px rgba(251, 191, 36, 0.3) !important;
+            border: 5px solid rgba(255, 255, 255, 0.8) !important;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            50% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+        }
+        .active-round-highlight {
+            animation: pulse-border 2s infinite; /* Animação de pulso */
+            border: 2px solid #10b981;
+            transform: scale(1.02); /* Leve destaque visual */
+            opacity: 1 !important; /* Garante que fique totalmente visível */
+        }
+
+        .playing-btn {
+            background-color: #16a34a !important; /* green-600 */
+        }
+        .playing-btn:hover {
+            background-color: #15803d !important; /* green-700 */
+        }
+
+        @keyframes fall-in-ball {
+            0% { transform: scale(0.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .ball-fall-in {
+            animation: fall-in-ball 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+        }
+        
+        /* ANIMAÇÃO DO GLOBO E CICLONE DE NÚMEROS */
+        @keyframes spin-cage {
+            from { transform: rotateY(0deg) rotateX(10deg); }
+            to { transform: rotateY(360deg) rotateX(10deg); }
+        }
+        .spinning-cage {
+            transform-style: preserve-3d;
+            animation: spin-cage 0.5s linear infinite;
+        }
+        .number-cyclone-particle {
+            position: absolute;
+            color: white;
+            font-weight: 900;
+            opacity: 0.7;
+            transform-style: preserve-3d;
+            animation-timing-function: ease-in-out;
+            animation-iteration-count: infinite;
+        }
+        @keyframes fly-in-cage-1 {
+            0% { transform: translate3d(0, 0, 0) rotateY(0deg); }
+            100% { transform: translate3d(50px, 80px, 150px) rotateY(360deg); }
+        }
+        @keyframes fly-in-cage-2 {
+            0% { transform: translate3d(0, 0, 0) rotateX(0deg); }
+            100% { transform: translate3d(-80px, -120px, 100px) rotateX(360deg); }
+        }
+        @keyframes fly-in-cage-3 {
+            0% { transform: translate3d(0, 0, 0) rotateZ(0deg); }
+            100% { transform: translate3d(150px, -90px, -50px) rotateZ(360deg); }
+        }
+        @keyframes fly-in-cage-4 {
+            0% { transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg); }
+            100% { transform: translate3d(-120px, 140px, -80px) rotateX(-360deg) rotateY(360deg); }
+        }
+        
+        /* ANIMAÇÃO DO MARTELO DO LEILÃO (Aprimorada) */
+        @keyframes gavel-strike-impact {
+            0% { transform: rotate(25deg); }
+            50% { transform: rotate(-45deg) scale(1.1); }
+            70% { transform: rotate(0deg) scale(1.4); } /* Impacto */
+            90% { transform: rotate(10deg) scale(1.1); } /* Recuo */
+            100% { transform: rotate(0deg); }
+        }
+        .animate-gavel-strike {
+            display: inline-block !important;
+            animation: gavel-strike-impact 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            transform-origin: bottom right; /* Ponto de rotação aprimorado */
+        }
+        
+        /* ANIMAÇÃO DE LANCE DO LEILÃO */
+        .bid-feedback-animation {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            font-size: 3rem;
+            font-weight: 900;
+            pointer-events: none;
+            z-index: 99999;
+            animation: bid-feedback 1.2s ease-out forwards;
+            text-shadow: 0px 4px 10px rgba(0,0,0,0.7);
+        }
+        @keyframes bid-feedback {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            80% { transform: translate(-50%, -100px) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -120px) scale(0.8); opacity: 0; }
+        }
+        
+        /* Animação para Atualização do Lance do Leilão */
+        @keyframes bid-pulse-flash {
+            0% { transform: scale(1); color: #fbbf24; text-shadow: none; }
+            40% { transform: scale(1.15); color: #fef08a; text-shadow: 0 0 30px rgba(253, 224, 71, 1); }
+            100% { transform: scale(1); color: #fbbf24; text-shadow: none; }
+        }
+        .animate-bid-flash {
+            animation: bid-pulse-flash 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .text-stroke-black {
+            -webkit-text-stroke: 1px #000;
+            paint-order: stroke fill;
+        }
+
+        .auction-bid-display {
+            -webkit-text-stroke: 2px #000;
+            paint-order: stroke fill;
+            filter: drop-shadow(0 0 10px rgba(0,0,0,0.3));
+        }
+
+        /* Animação de Letreiro para Descrição da Rodada */
+        .marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+            box-sizing: border-box;
+        }
+        .marquee-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 20s linear infinite;
+        }
+        @keyframes marquee {
+            0%   { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+
+        /* Animação de Brilho para Prêmios */
+        @keyframes prize-glow {
+            0%, 100% { text-shadow: 0 0 5px rgba(251, 191, 36, 0.7); }
+            50% { text-shadow: 0 0 15px rgba(253, 224, 71, 1); }
+        }
+        .prize-highlight {
+            animation: prize-glow 3s ease-in-out infinite;
+        }
+
+        /* Estilos específicos para ordenar as rodadas: Ativa no topo, Completa no final */
+        #games-list {
+            display: flex;
+            flex-direction: column;
+        }
+        .game-item {
+            order: 2; /* Padrão: Rodadas não iniciadas ficam no meio */
+        }
+        .game-item.active-round-highlight {
+            order: 1; /* Rodada Ativa: vai para o topo */
+        }
+        .game-item.game-completed-style {
+            order: 3; /* Rodada Concluída: vai para o final */
+        }
+
+        /* Animação de flash para o sorteio automático */
+        @keyframes custom-flash {
+            0% { opacity: 0.5; }
+            50% { opacity: 1.0; transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .animate-custom-flash { 
+            animation: custom-flash 0.3s ease-out; 
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Estilo base para o número anunciado */
+        #current-number-wrapper {
+             min-height: 20rem; /* Mantém a área estável sem saltos de layout */
+             transition: all 0.3s ease;
+             background: radial-gradient(circle at center, rgba(15, 23, 42, 0.03) 0%, transparent 70%);
+        }
+        .dark #current-number-wrapper {
+             background: radial-gradient(circle at center, rgba(241, 245, 249, 0.03) 0%, transparent 70%);
+        }
+
+        #current-number {
+             -webkit-text-stroke: 2px #000000; 
+             color: #FFFFFF; 
+             text-shadow: none !important; 
+        }
+
+        /* Novo estilo para o número flutuante do sorteio automático */
+        .autodraw-display {
+            font-size: clamp(10rem, 30vw, 20rem); 
+            line-height: 1; 
+            text-shadow: 2px 2px 5px #000;
+        }
+
+        /* Estilo para o modal de Encerramento/Break (Corrigido para evitar scroll da página) */
+        #event-break-modal .modal-content {
+            max-height: 95vh;
+            width: 95vw;
+        }
+        
+        @keyframes slide-down-fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .next-round-modal-content {
+            animation: slide-down-fade-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        /* ANIMAÇÃO PARA O ÚLTIMO NÚMERO SORTEADO NO PAINEL */
+        @keyframes last-number-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+            50% { transform: scale(1.15); box-shadow: 0 0 20px 10px rgba(255, 255, 255, 0.4); }
+            100% { transform: scale(1.1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+        .animate-last-number {
+            animation: last-number-pulse 1.5s infinite alternate ease-in-out !important;
+            z-index: 10;
+            position: relative;
+            box-shadow: 0 0 20px 5px rgba(255,255,255,0.6) !important;
+        }
+
+        [contenteditable="true"]:empty:before { content: attr(placeholder); color: #6b7280; pointer-events: none; display: block; }
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; pointer-events: none; }
+        .bingo-cell, .winner-card { cursor: pointer; }
+        .bingo-cell { position: relative; } /* Necessário para posicionar o indicador de patrocinador */
+
+        /* Indicador de Patrocinador no Painel de Números */
+        .bingo-cell.has-sponsor {
+            position: relative;
+        }
+        .bingo-cell.has-sponsor::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, #fde047 0%, #eab308 60%, #ca8a04 100%);
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 8px rgba(234, 179, 8, 0.95), 0 2px 4px rgba(0, 0, 0, 0.6);
+            z-index: 20;
+            pointer-events: none;
+            animation: sponsor-badge-pulse 2s infinite ease-in-out;
+        }
+        @keyframes sponsor-badge-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.22); opacity: 0.85; }
+        }
+
+        /* Esconde o seletor de cor padrão */
+        input[type="color"] { -webkit-appearance: none; appearance: none; border: none; width: 24px; height: 24px; cursor: pointer; background-color: transparent; padding: 0; }
+        /* Estiliza a "bolha" de cor */
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: 2px solid #9ca3af; border-radius: 50%; }
+
+    </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
+    <meta name="description" content="An interactive bingo and prize show application designed for local, offline events. Manage rounds, draw numbers, track winners, and customize the game experience.">
+    <canvas id="confetti-canvas"></canvas>
+    
+    <div class="flex flex-col min-h-screen">
+        <header class="text-center py-4 flex-shrink-0 relative mt-6">
+            <button id="theme-toggle-main-btn" class="absolute top-0 right-4 p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors h-10 w-10 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm" title="Alternar Modo Claro/Escuro">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            </button>
+            <div class="flex flex-col items-center justify-center">
+                <!-- App Logo (será preenchido dinamicamente) -->
+                <div id="app-logo" class="w-32 h-32 sm:w-48 sm:h-48 mb-2 logo-animation">
+                    <!-- O logo customizado será inserido aqui, ou o SVG padrão será mostrado -->
+                </div>
+                
+                <div id="main-title" class="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight leading-none drop-shadow-lg transform hover:scale-105 transition-transform duration-300 uppercase focus:outline-none focus:ring-2 ring-amber-500 rounded-lg px-4 py-2 min-h-[44px] mt-4 text-center">
+                    <!-- Será preenchido pelo JS -->
+                </div>
+                
+                <div id="global-connection-status-container" class="mt-2 w-full flex justify-center flex-col items-center gap-2">
+                    <div id="global-connection-status" class="hidden flex items-center justify-center p-2 rounded-full shadow-lg bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-sm font-bold font-mono text-center px-6 border-2 border-yellow-400 dark:border-yellow-600">
+                        ⏳ Conectando à Nuvem...
+                    </div>
+                                        <div class="flex flex-col sm:flex-row gap-2 mt-2">
+                        <button id="show-attendee-qr-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full font-bold shadow-md text-sm transition-transform hover:scale-105 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 1v1h1V5H5zm0 7a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 1v1h1v-1H5zm6-9a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1V4zm2 1v1h1V5h-1zm-2 7a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1v-3a1 1 0 00-1-1h-3zm1 2v1h1v-1h-1z" clip-rule="evenodd" />
+                            </svg>
+                            Mostrar QR Code (Público)
+                        </button>
+                        <button id="simple-controller-btn" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-full font-bold shadow-md text-sm transition-transform hover:scale-105 flex items-center justify-center gap-2">
+                            📱 Painel Simples (Mobile)
+                        </button>
+                    </div>
+                </div>
+
+                <button id="install-pwa-btn" class="hidden mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black py-3 px-8 rounded-full text-lg sm:text-xl shadow-[0_0_15px_rgba(79,70,229,0.5)] transform hover:scale-110 transition-all duration-300 border-2 border-blue-400">⬇️ INSTALAR APP (OFFLINE / WINDOWS) ⬇️</button>
+            </div>
+        </header>
+
+        <!-- A classe grid agora define o layout principal -->
+        <main class="grid grid-cols-1 lg:grid-cols-5 gap-6 p-4 sm:p-6">
+            
+            <!-- BARRA LATERAL ESQUERDA: VÍDEO, CONTROLES GERAIS E VENCEDORES -->
+            <aside class="lg:col-span-1 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 flex flex-col order-3 lg:order-1">
+                
+                
+
+                <!-- NOVO: Botão de Configurações de Personalização -->
+                <div class="mb-4 flex-shrink-0 flex">
+                    <button id="show-settings-btn" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg text-base shadow-lg transition-all" data-label-key="customizeButton">🎨 Personalizar Painel</button>
+                </div>
+
+                <!-- 2. BOTÕES DE CONTROLE GERAIS -->
+                <div class="flex flex-col gap-2 mb-4 flex-shrink-0">
+                    
+                    <button id="show-card-generator-btn" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 min-h-[44px] px-4 rounded-lg text-xs shadow-sm transition-all text-center">🖨️ Gerar Cartelas</button>
+                </div>
+                
+                <!-- AÇÕES EXTRAS -->
+                <div class="flex flex-col gap-2 mb-4 flex-shrink-0">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="save-to-file-btn" class="w-full min-h-[44px] bg-green-600 hover:bg-green-700 text-white font-bold py-2 min-h-[44px] px-4 rounded-lg text-xs shadow-lg transition-all text-center" data-label-key="saveToFileButton">💾 Salvar (PC)</button>
+                        <button id="show-load-options-btn" class="w-full min-h-[44px] bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 min-h-[44px] px-4 rounded-lg text-xs shadow-lg transition-all text-center cursor-pointer" data-label-key="loadFromFileButton">📂 Carregar</button>
+                        <input type="file" id="load-from-file-input" class="hidden" accept=".json,application/json">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="interval-btn" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 min-h-[44px] px-2 rounded-lg text-xs shadow-lg transition-all text-center flex items-center justify-center gap-1" data-label-key="intervalButton">⏱️ Intervalo</button>
+                        <button id="edit-menu-btn" title="Editar Cardápio" class="bg-slate-300 dark:bg-gray-600 hover:bg-slate-400 dark:hover:bg-gray-500 text-slate-800 dark:text-white font-bold py-2 min-h-[44px] p-2 rounded-lg text-xs shadow-lg transition-all flex justify-center items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                             Cardápio
+                        </button>
+                    </div>
+                    <button id="share-btn" class="hidden w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 min-h-[44px] px-4 rounded-xl text-base shadow-lg transition-all" data-label-key="generateProofButton">🧾 Gerar Prova</button>
+                    <button id="end-event-btn" class="hidden w-full bg-purple-700 hover:bg-purple-800 text-white font-bold py-2 min-h-[44px] px-4 rounded-lg text-sm shadow-lg transition-all" data-label-key="endEventButton">🛑 Encerrar Evento</button>
+                    <button id="reset-event-btn" class="w-full min-h-[44px] bg-red-600 hover:bg-red-700 text-white font-bold py-2 min-h-[44px] px-4 rounded-xl text-base shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer" data-label-key="resetEventButton">🔄 Novo Jogo</button>
+                </div>
+                
+                <!-- LEGENDA DE ATALHOS -->
+                <div id="shortcuts-legend" class="mt-4 flex-shrink-0">
+                    <h3 class="text-base font-bold text-sky-400 mb-3 text-center" data-label-key="quickShortcutsTitle">Atalhos Rápidos</h3>
+                    <ul id="shortcuts-legend-list" class="space-y-2 text-xs text-slate-600 dark:text-slate-400 pl-4">
+                        <!-- Conteúdo dinâmico via JS -->
+                    </ul>
+                </div>
+
+                <!-- 3. VENCEDORES (LISTA FLEXÍVEL E SCROLLÁVEL) -->
+                <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-300 mb-2 flex-shrink-0 mt-4" data-label-key="winnersTitle">Vencedores</h2>
+                <div id="winners-container" class="space-y-4 flex-grow overflow-y-auto pr-2"></div>
+
+                <!-- APOIE O PROJETO BINGO SHOW -->
+                <div class="bg-gray-200 dark:bg-gray-700 p-4 rounded-xl text-center mt-4 flex-shrink-0">
+                    <h3 class="text-base font-bold text-sky-400 mb-3">Apoie o Projeto Bingo Show 🚀</h3>
+                    <button id="show-dev-donation-modal-btn" class="w-full min-h-[44px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg text-sm shadow-lg transition-all">☕ Pagar um café pro Dev</button>
+                </div>
+            </aside>
+
+            <!-- COLUNA CENTRAL: PAINEL, NÚMERO ANUNCIado E BRINDES -->
+            <div class="lg:col-span-3 flex flex-col gap-6 order-1 lg:order-2">
+                <!-- PAINEL DE NÚMEROS -->
+                <section id="board-section" class="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-xl order-2 lg:order-1">
+                    <div class="flex items-center justify-between mb-4 relative">
+                        <h2 class="text-xl font-bold text-center text-slate-800 dark:text-slate-300 w-full" data-label-key="bingoBoardTitle">Painel de Números</h2>
+                        <div class="absolute right-0 flex items-center gap-2">
+                            <button id="show-winners-board-btn" class="hidden p-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded shadow-md transition-colors whitespace-nowrap text-sm h-9 flex items-center">
+                                🏆 Vencedores
+                            </button>
+                            <button id="fullscreen-board-btn" class="p-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:bg-gray-600 rounded text-slate-800 dark:text-slate-300 transition-colors" title="Tela Cheia">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                 </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- NOVO PAINEL DE RODADA ATIVA -->
+                    <div id="active-round-panel" class="bg-white dark:bg-gray-800 rounded-2xl mb-6 p-4 sm:p-6 text-center transition-all shadow-md border border-slate-200 dark:border-gray-700 hidden cursor-pointer hover:shadow-lg hover:border-sky-300 dark:hover:border-sky-700 group" title="Clique para editar prêmios e descrição">
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div id="active-round-info" class="text-center md:text-left flex-shrink-0 flex items-center gap-2">
+                                <button id="panel-prev-round-btn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-800 dark:text-white rounded-full w-8 h-8 flex items-center justify-center transition" title="Rodada Anterior" onclick="event.stopPropagation()">◀</button>
+                                <div>
+                                    <p id="active-round-name" class="text-2xl sm:text-3xl font-black text-sky-500 dark:text-sky-400"></p>
+                                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium"><span id="active-round-date"></span> - <span id="active-round-time"></span></p>
+                                </div>
+                                <button id="panel-next-round-btn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-800 dark:text-white rounded-full w-8 h-8 flex items-center justify-center transition" title="Próxima Rodada" onclick="event.stopPropagation()">▶</button>
+                            </div>
+                            <div id="active-round-prizes" class="text-center md:border-l border-slate-100 dark:border-gray-700 px-4 w-full md:w-auto flex-grow prize-highlight overflow-hidden">
+                                <!-- Prêmios serão inseridos aqui -->
+                            </div>
+                            <div id="active-round-stats" class="text-center md:text-right flex-shrink-0 md:border-l border-slate-100 dark:border-gray-700 md:pl-4 flex flex-col justify-center items-center md:items-end">
+                                <div>
+                                    <p class="text-xs uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 mb-1">Chamados</p>
+                                    <p id="active-round-called-count" class="text-3xl sm:text-4xl font-black text-slate-800 dark:text-white leading-none"></p>
+                                </div>
+                                <button type="button" class="mt-3 bg-sky-100 hover:bg-sky-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-sky-600 dark:text-sky-300 font-bold py-1 px-3 rounded text-xs flex items-center gap-1 transition shadow-sm pointer-events-none">
+                                    <span>✏️</span> Editar
+                                </button>
+                            </div>
+                        </div>
+                        <div id="active-round-description-display" class="marquee-container text-slate-600 dark:text-slate-300 text-sm mt-4 pt-3 border-t border-slate-100 dark:border-gray-700 hidden text-left italic">
+                            <span class="marquee-text"></span>
+                        </div>
+                    </div>
+                    <div id="no-active-round-panel" class="text-xl font-bold text-center text-slate-400 dark:text-slate-500 bg-white dark:bg-gray-800 border-2 border-dashed border-slate-200 dark:border-gray-700 py-8 rounded-2xl mb-6 transition-all shadow-sm">
+                        <div class="flex flex-col items-center gap-2">
+                            <span class="text-4xl opacity-50">🎮</span>
+                            <span>Selecione uma Rodada no Menu</span>
+                        </div>
+                    </div>
+                    
+                    <!-- NOVO: Wrapper para aplicar o zoom (com overflow-x-auto para evitar sobreposição) -->
+                    <div id="bingo-board-wrapper" class="w-full mx-auto overflow-x-auto">
+                        <!-- AQUI AS LETRAS B-I-N-G-O/A-J-U-D-E SERÃO RENDERIZADAS DINAMICAMENTE -->
+                        <div id="bingo-board" class="grid grid-cols-10 gap-x-2 sm:gap-x-4 min-w-max"></div>
+                    <div id="fullscreen-controls" class="hidden flex-col sm:flex-row gap-4 justify-between items-center mt-4 bg-gray-200 dark:bg-gray-700 p-4 rounded-lg">
+                        <div class="flex-1 w-full sm:w-auto">
+                            <label for="fs-board-zoom-slider" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Zoom do Painel (<span id="fs-board-zoom-value">100</span>%)</label>
+                            <input type="range" id="fs-board-zoom-slider" min="50" max="150" value="100" class="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="flex gap-2 w-full sm:w-auto items-center">
+                             <button id="fs-prev-round-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 min-h-[44px] px-3 rounded-xl text-sm shadow-lg transition-transform transform hover:scale-105" title="Rodada Anterior">◀</button>
+                             <select id="fs-round-selector" class="bg-white dark:bg-gray-800 text-slate-800 dark:text-white border-2 border-sky-400 font-bold py-2 min-h-[44px] px-4 rounded-lg text-sm shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                             </select>
+                             <button id="fs-next-round-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 min-h-[44px] px-3 rounded-xl text-sm shadow-lg transition-transform transform hover:scale-105" title="Próxima Rodada">▶</button>
+                             <button id="fs-interval-btn" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 min-h-[44px] px-4 rounded-xl text-sm shadow-lg transition-transform transform hover:scale-105 ml-2">⏱️ Intervalo</button>
+                             <button id="fs-auto-draw-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 min-h-[44px] px-4 rounded-xl text-sm shadow-lg transition-transform transform hover:scale-105 ml-2 hidden" data-label-key="autoDrawButton">Sorteio Auto</button>
+                        </div>
+                    </div>
+
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-3 gap-2">
+                    <button id="auto-draw-btn-bottom" class="w-full min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 min-h-[44px] px-4 rounded-xl text-sm shadow-lg transition-transform transform hover:scale-105" data-label-key="autoDrawButton">🎰 Sorteio Automático</button>
+                         <button id="verify-btn-bottom" class="w-full min-h-[44px] bg-green-600 hover:bg-green-700 text-white font-bold py-2 min-h-[44px] px-4 rounded-xl text-sm shadow-lg transition-transform transform hover:scale-105" data-label-key="verifyButton">✅ Verificar</button>
+                         <button id="clear-round-btn-bottom" class="w-full min-h-[44px] bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 min-h-[44px] px-4 rounded-xl text-sm shadow-lg transition-transform transform hover:scale-105" data-label-key="clearRoundButton">🧹 Limpar Rodada</button>
+                    </div>
+                </section>
+                
+                <div id="middle-row-section" class="grid grid-cols-1 lg:grid-cols-5 gap-6 items-stretch order-1 lg:order-2">
+                    <!-- CONTROLES -->
+                    <div id="controls-panel-left" class="lg:col-span-1 bg-white dark:bg-gray-800 rounded-2xl p-4 w-full mx-auto flex flex-col order-2 lg:order-1">
+                        <div id="clock" class="text-center text-2xl font-bold text-slate-800 dark:text-slate-300 mb-2"></div>
+                        <h2 class="text-lg font-bold text-slate-800 dark:text-slate-300 mb-3 text-center" data-label-key="controlsPanelTitle">Controles</h2>
+                        
+                        <!-- Slider de Zoom PAINEL DE NÚMEROS -->
+                        <div class="mb-3">
+                            <label for="board-zoom-slider" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1" data-label-key="boardScaleLabel">Escala Painel Números (<span id="board-zoom-value">100</span>%)</label>
+                            <input type="range" id="board-zoom-slider" min="50" max="150" value="100" class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer range-lg">
+                        </div>
+
+                        <!-- Slider de Zoom NÚMERO ANUNCIADO -->
+                        <div class="mb-3">
+                            <label for="display-zoom-slider" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1" data-label-key="displayScaleLabel">Escala Número Anunciado (<span id="display-zoom-value">100</span>%)</label>
+                            <input type="range" id="display-zoom-slider" min="50" max="150" value="100" class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer range-lg">
+                        </div>
+
+
+                        <form id="manual-input-form" class="flex flex-col gap-2 mb-3">
+                            <div class="flex items-center gap-1">
+                                <input type="text" id="letter-input" placeholder="L" maxlength="1" class="text-center text-sm uppercase font-bold w-10 p-2 border-2 border-slate-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                                <input type="number" id="number-input" placeholder="Nº" class="text-center text-sm font-bold flex-grow p-2 border-2 border-slate-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500" min="1" max="75">
+                            </div>
+                            <button type="submit" class="w-full min-h-[44px] bg-sky-600 hover:bg-sky-700 text-white font-bold p-2 rounded-lg text-sm shadow-lg" data-label-key="manualAnnounceButton">📢 Anunciar Manual</button>
+                        </form>
+                        <p id="error-message" class="text-red-500 font-bold h-5 mb-1 text-xs text-center"></p>
+                        <div class="grid grid-cols-1 gap-2">
+                            <button id="auto-draw-btn-top" class="w-full min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 min-h-[44px] px-3 text-xs rounded-lg shadow-lg" data-label-key="autoDrawButton">🎰 Sorteio Automático</button>
+                            <button id="verify-btn-top" class="w-full min-h-[44px] bg-green-600 hover:bg-green-700 text-white font-bold py-2 min-h-[44px] px-3 text-xs rounded-lg shadow-lg" data-label-key="verifyButton">✅ Verificar</button>
+                            <button id="clear-round-btn-top" class="w-full min-h-[44px] bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 min-h-[44px] px-3 text-xs rounded-lg shadow-lg" data-label-key="clearRoundButton">🧹 Limpar Rodada</button>
+                        </div>
+                    </div>
+                    
+                    
+                    <div id="draw-and-prize-section" class="lg:col-span-4 grid grid-cols-1 xl:grid-cols-4 gap-6 relative order-1 lg:order-2">
+                        <div class="lg:col-span-4 xl:col-span-3 flex flex-col gap-6 h-full">
+                            <!-- NÚMERO ANUNCIADO -->
+                            <section id="display-section" class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 flex flex-col justify-center items-center h-full flex-grow relative">
+                                <button id="fullscreen-display-btn" class="absolute top-4 right-4 p-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:bg-gray-600 rounded text-slate-800 dark:text-slate-300 transition-colors z-[10]" title="Tela Cheia">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                    </svg>
+                                </button>
+                                <p id="main-display-label" class="text-xl sm:text-2xl font-bold text-slate-600 dark:text-slate-400 tracking-wider uppercase text-center" data-label-key="announcedNumberLabel">Número Anunciado</p>
+                                <!-- Wrapper do Zoom para o Número Anunciado -->
+                                <div id="current-number-wrapper" class="my-4 flex justify-center items-center w-full relative">
+                                     <!-- Container para o número do bingo e para o número do brinde -->
+                                    <div id="current-number" class="font-black flex justify-center items-center gap-x-2 sm:gap-x-4 rounded-full aspect-square w-56 sm:w-72 lg:w-80 transition-all duration-300" style="font-size: clamp(5rem, 20vw, 12rem); line-height: 1; visibility: hidden;"></div>
+                                     <!-- Container separado para o sorteio de brinde, para não interferir com o do bingo -->
+                                    <div id="prize-draw-display-container" class="absolute inset-0 flex items-center justify-center hidden"></div>
+                                </div>
+                                <div class="mt-4 text-center">
+                                    <h3 class="text-xl font-bold text-slate-800 dark:text-slate-300 mb-2" data-label-key="lastNumbersLabel">Últimos 5 Números</h3>
+                                    <div id="last-numbers-display" class="flex flex-wrap justify-center gap-3 mb-4"></div>
+                                    <div id="last-prizes-container" class="mt-4 text-center hidden pt-4 border-t border-slate-200 dark:border-gray-700">
+                                        <h3 class="text-xl font-bold text-slate-800 dark:text-slate-300 mb-2">Últimos Brindes</h3>
+                                        <div id="last-prizes-display" class="flex flex-wrap justify-center gap-3"></div>
+                                    </div>
+                                </div>
+                                <div id="fs-prize-controls" class="hidden w-full mt-4 bg-gray-200 dark:bg-gray-700 p-4 rounded-lg flex flex-col sm:flex-row gap-4 items-center justify-between">
+                                    <div class="flex-1 w-full sm:w-auto">
+                                        <label for="fs-display-zoom-slider" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Zoom do Número (<span id="fs-display-zoom-value">100</span>%)</label>
+                                        <input type="range" id="fs-display-zoom-slider" min="50" max="150" value="100" class="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                                    </div>
+                                </div>
+                            </section>
+                            
+                            <!-- 2. LEILÃO -->
+                            <section id="auction-section" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl relative flex flex-col justify-center">
+                                <div class="flex items-center justify-between mb-4 relative">
+                                    <h2 class="text-2xl font-bold text-center text-slate-800 dark:text-slate-300 w-full" data-label-key="auctionTitle">Leilão</h2>
+                                    <button id="fullscreen-auction-btn" class="absolute right-0 p-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:bg-gray-600 rounded text-slate-800 dark:text-slate-300 transition-colors" title="Tela Cheia">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <form id="auction-form" class="space-y-3 max-w-lg mx-auto w-full">
+                                    <div class="relative text-center flex flex-col items-center justify-center w-full">
+                                        <div id="bid-feedback-container" class="absolute inset-x-0 top-0 bottom-0 z-[9999] pointer-events-none flex justify-center items-center"></div>
+                                        <div class="flex items-center justify-center w-full gap-4 relative z-10">
+                                            <button type="button" id="auction-minus-50-btn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-800 dark:text-white rounded-full w-10 h-10 flex items-center justify-center transition text-xl font-bold p-0 shadow-sm flex-shrink-0" title="Subtrair R$ 50">-</button>
+                                            <div id="auction-current-bid-display" class="text-4xl sm:text-5xl md:text-5xl font-black text-amber-400 py-4 auction-bid-display whitespace-nowrap leading-none px-2 flex-grow flex justify-center w-full">R$ 0,00</div>
+                                            <button type="button" id="auction-plus-50-btn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-800 dark:text-white rounded-full w-10 h-10 flex items-center justify-center transition text-xl font-bold p-0 shadow-sm flex-shrink-0" title="Adicionar R$ 50">+</button>
+                                        </div>
+                                        <input type="hidden" id="auction-item-current-bid" value="0">
+                                    </div>
+                                    <input type="text" id="auction-item-name" placeholder="Nome do Item" class="w-full text-center text-xl font-bold p-3 border-2 border-slate-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button type="button" id="add-50-bid" class="bg-slate-300 dark:bg-gray-600 hover:bg-slate-400 dark:hover:bg-gray-500 text-slate-800 dark:text-white font-bold py-2 min-h-[44px] px-4 rounded-lg text-lg">+ R$ 50</button>
+                                        <button type="button" id="add-100-bid" class="bg-slate-300 dark:bg-gray-600 hover:bg-slate-400 dark:hover:bg-gray-500 text-slate-800 dark:text-white font-bold py-2 min-h-[44px] px-4 rounded-lg text-lg">+ R$ 100</button>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <input type="number" id="custom-bid-input" placeholder="Valor" class="flex-grow text-center text-base font-bold p-2 border-2 border-slate-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                                        <button type="button" id="add-custom-bid-btn" class="bg-sky-600 hover:bg-sky-700 text-white font-bold p-2 px-4 rounded-lg">Adicionar</button>
+                                    </div>
+                                    <input type="text" id="auction-winner-name" placeholder="Nome do Arrematador" class="w-full text-center text-xl font-bold p-3 border-2 border-slate-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                                    
+                                    <!-- NOVO: Wrapper para os botões -->
+                                    <div class="flex gap-2 mt-4">
+                                        <button type="button" id="reset-auction-btn" class="w-1/3 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg text-lg shadow-lg" title="Limpar">Limpar</button>
+                                        <button type="submit" class="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2 min-h-[44px] px-4 rounded-lg text-lg shadow-[0_0_15px_rgba(16,185,129,0.5)] transform hover:scale-105 transition-all duration-300" data-label-key="sellItemButton">💎 Vender Item</button>
+                                    </div>
+                                </form>
+                                <div id="fs-auction-controls" class="hidden flex-col sm:flex-row gap-4 justify-between items-center mt-4 bg-gray-200 dark:bg-gray-700 p-4 rounded-lg flex-wrap">
+                                    <div class="flex-1">
+                                        <label for="fs-auction-zoom-slider" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Zoom do Leilão (<span id="fs-auction-zoom-value">100</span>%)</label>
+                                        <input type="range" id="fs-auction-zoom-slider" min="50" max="250" value="100" class="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                        
+                        <!-- SORTEIO DE BRINDES -->
+                        <div id="prize-draw-section" class="lg:col-span-4 xl:col-span-1 bg-white dark:bg-gray-800 rounded-2xl p-4 w-full mx-auto flex flex-col h-full">
+                            <div class="flex items-center justify-center mb-3 relative">
+                                <h2 class="text-lg font-bold text-center text-slate-800 dark:text-slate-300 w-full" data-label-key="prizeDrawTitle">Sorteio de Brindes</h2>
+                            </div>
+                            <form id="prize-draw-form" class="flex flex-col gap-2 flex-grow">
+                                <button type="button" id="check-drawn-prizes-btn" class="w-full min-h-[44px] bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 min-h-[44px] px-3 rounded-lg text-xs shadow-lg mb-1" data-label-key="checkDrawnPrizesButton">🧐 Conferir Sorteados</button>
+                                <div class="flex flex-col gap-1">
+                                    <label for="prize-draw-min" class="text-xs text-slate-600 dark:text-slate-400" data-label-key="prizeDrawFromLabel">De:</label>
+                                    <input type="number" id="prize-draw-min" value="1" class="w-full text-center text-base font-bold p-2 border-2 border-slate-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 rounded-lg">
+                                    <label for="prize-draw-max" class="text-xs text-slate-600 dark:text-slate-400 mt-1" data-label-key="prizeDrawToLabel">Até:</label>
+                                    <input type="number" id="prize-draw-max" value="500" class="w-full text-center text-base font-bold p-2 border-2 border-slate-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 rounded-lg">
+                                </div>
+                                <div class="flex items-center justify-center gap-2 text-xs text-slate-800 dark:text-slate-300">
+                                    <input type="checkbox" id="no-repeat-prize-draw" class="h-3 w-3 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <label for="no-repeat-prize-draw" data-label-key="noRepeatCheckboxLabel">Não repetir sorteados</label>
+                                </div>
+                                <button type="button" id="prize-draw-random-btn" class="w-full min-h-[44px] bg-purple-600 hover:bg-purple-700 text-white font-bold p-3 rounded-lg text-lg shadow-lg mt-1" data-label-key="prizeDrawRandomButton">🎁 Sortear</button>
+                                <input type="text" id="prize-draw-number-manual" data-label-key="prizeDrawTicketNumberPlaceholder" placeholder="Nº Cartela" class="text-center text-base font-bold p-2 border-2 border-slate-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 mt-2">
+                                <input type="text" id="prize-draw-name" data-label-key="prizeDrawNamePlaceholder" placeholder="Nome (Opcional)" class="text-center text-base font-bold p-2 border-2 border-slate-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                                <input type="text" id="prize-draw-description" data-label-key="prizeDrawDescriptionPlaceholder" placeholder="Brinde (Opcional)" class="text-center text-base font-bold p-2 border-2 border-slate-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                                <input type="text" id="prize-draw-sponsor" placeholder="Patrocinador / Doador (Opcional)" class="text-center text-base font-bold p-2 border-2 border-amber-300 dark:border-amber-600/70 bg-amber-50 dark:bg-amber-950/30 text-slate-800 dark:text-amber-200 placeholder:text-amber-600/60 dark:placeholder:text-amber-400/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                <button type="submit" class="w-full min-h-[44px] bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 min-h-[44px] px-4 rounded-xl text-sm shadow-lg mt-1" data-label-key="registerPrizeButton">📝 Registrar Brinde</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BARRA LATERAL DIREITA: RODADAS, PRÊMIOS E APOIO -->
+            <aside class="lg:col-span-1 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 flex flex-col order-2 lg:order-3">
+                <!-- RODADAS E PRÊMIOS -->
+                <div class="flex-grow">
+                    <button id="add-extra-game-btn" class="w-full min-h-[44px] bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl text-base shadow-lg transition-all mb-4" data-label-key="addExtraRoundButton">➕ Adicionar Rodada Extra</button>
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-300 mb-4" data-label-key="roundsAndPrizesTitle">Rodadas e Prêmios</h2>
+                    <div id="games-list" class="space-y-4">
+                        <!-- As rodadas serão inseridas dinamicamente aqui -->
+                    </div>
+                </div>
+                
+                <!-- CONTROLES DE RODADA E APOIO -->
+                <div class="flex-shrink-0 mt-6 space-y-4">
+                    <!-- APOIO -->
+                    <div class="bg-gray-200 dark:bg-gray-700 p-4 rounded-xl text-center">
+                        <h3 class="text-base font-bold text-sky-400 mb-3" data-label-key="supportTitle">Apoie a Instituição 🤝</h3>
+                        <button id="show-donation-modal-btn" class="w-full min-h-[44px] bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 min-h-[44px] px-4 rounded-lg text-sm shadow-lg transition-all" data-label-key="supportButton">🤝 Faça sua Doação</button>
+                    </div>
+                </div>
+            </aside>
+        </main>
+        
+        <footer class="text-center py-6 px-4 text-xs text-slate-600 dark:text-slate-400 flex-shrink-0">
+            <p class="max-w-4xl mx-auto">
+                Este programa é o resultado do Trabalho de Conclusão de Curso de <a href="https://www.instagram.com/oalison.rodrigues" target="_blank" class="text-sky-400 hover:underline">Alison Fernando Rodrigues dos Santos</a>, sob orientação do <a href="https://www.instagram.com/danilonobresant" target="_blank" class="text-sky-400 hover:underline">Prof. Pe. Dr. Danilo Nobre dos Santos</a> Título: "E O VERBO SE FEZ I.A.? DA REFLEXÃO TEOLÓGICA E COMUNICATIVA AO DESENVOLVIMENTO DE SOLUÇÕES PASTORAIS COM INTELIGÊNCIA ARTIFICIAL". (<a href="https://drive.google.com/file/d/14uPBeHCT5aP1ACPLlPpIjfD5J1iLQfyD/view?usp=drive_link" target="_blank" class="text-sky-400 hover:underline">Link para acessar</a>)
+                <br>
+                Desenvolvido inteiramente com a Inteligência Artificial Gemini 3.1 PRO da Google, este projeto demonstra como é possível criar soluções pastorais inovadoras com criatividade e ferramentas de baixo custo ou gratuitas, mesmo sem conhecimentos prévios em programação.
+            </p>
+            <p class="mt-2 text-slate-500 dark:text-slate-400">
+                <button id="show-changelog-btn" class="hover:underline text-sky-600 dark:text-sky-400 font-medium">Histórico de Versões</button> | Versão <span id="version" class="font-bold">7.8</span> - <span id="last-updated" class="italic">Carregando...</span>
+            </p>
+            <p id="build-footer" class="text-[9px] opacity-60 dark:opacity-50 mt-1 uppercase tracking-widest font-mono select-none"></p>
+        </footer>
+    </div>
+    
+    <!-- MODAIS (INICIALMENTE OCULTOS) -->
+    <div id="verification-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[400] hidden"></div>
+    <div id="floating-number-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-[400] hidden"></div>
+    <div id="sponsor-display-modal" class="fixed inset-0 bg-black bg-opacity-80 flex flex-col p-4 overflow-y-auto z-50 hidden"></div>
+    <div id="winner-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[400] hidden"></div>
+    <div id="custom-alert-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[400] hidden"></div>
+    <div id="congrats-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[400] hidden"></div>
+    <div id="event-break-modal" class="fixed inset-0 bg-gray-100 dark:bg-gray-900 bg-opacity-95 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="menu-edit-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="winner-edit-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="delete-confirm-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="clear-round-confirm-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="proof-options-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="spinning-wheel-modal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[400] hidden"></div>
+    <div id="reset-confirm-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="drawn-prizes-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[400] hidden"></div>
+    <div id="donation-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="final-winners-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-[400] hidden"></div>
+    <div id="changelog-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="load-options-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="round-edit-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="next-round-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="card-generator-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="card-scanner-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="sponsor-image-editor-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
+    <div id="interval-qr-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-[120] hidden"></div>
+
+    <!-- Rodapé para Impressão -->
+    <div id="print-footer" class="hidden">
+        <div class="content">
+            <div class="info">
+                <p><strong>Bingo Show v<span id="print-version"></span></strong></p>
+                <p>Impresso em: <span id="print-datetime"></span></p>
+            </div>
+            <div class="qr-code">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://bingoshow.netlify.app" alt="QR Code para bingoshow.netlify.app">
+                <p>Acesse o App</p>
+            </div>
+        </div>
+    </div>
+
+        <div id="dev-donation-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden">
+        <div class="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full text-center relative max-h-[90vh] overflow-y-auto">
+            <button id="close-dev-donation-btn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer p-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div class="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl">☕</div>
+            <h2 class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mb-1">Apoie o Desenvolvedor</h2>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mb-5">Ajude a manter o projeto Bingo Show atualizado e colabore com o desenvolvedor!</p>
+            
+            <div class="space-y-4">
+                <!-- OPÇÃO 1: PIX DEV COM QR CODE -->
+                <div class="border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/50 dark:bg-emerald-950/20 p-4 rounded-xl text-left">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded">Opção 1</span>
+                        <span class="text-sm font-bold text-slate-800 dark:text-white">Doação via PIX (Dev)</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="bg-white p-2 rounded-xl shadow border border-slate-200 dark:border-gray-700 mb-2 flex items-center justify-center min-h-[130px] w-[140px]">
+                            <img id="dev-pix-qr-img" src="" alt="QR Code PIX Dev" class="w-28 h-28 object-contain hidden" />
+                            <div id="dev-pix-qr-placeholder" class="text-xs text-slate-400 text-center p-2 hidden">
+                                Carregando QR...
+                            </div>
+                        </div>
+                        <div id="dev-pix-key-display" class="w-full bg-white dark:bg-gray-700 text-slate-800 dark:text-white p-2 rounded-lg text-center text-xs font-mono select-all border border-slate-200 dark:border-gray-600 truncate mb-2"></div>
+                        <button id="copy-dev-pix-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-lg text-xs transition-all shadow cursor-pointer">📋 Copiar Chave PIX</button>
+                    </div>
+                </div>
+
+                <!-- OPÇÃO 2: PAYPAL DEV COM QR CODE E BOTÃO -->
+                <div class="border border-blue-200 dark:border-blue-800/60 bg-blue-50/50 dark:bg-blue-950/20 p-4 rounded-xl text-left">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider bg-blue-600 text-white px-2 py-0.5 rounded">Opção 2</span>
+                        <span class="text-sm font-bold text-slate-800 dark:text-white">Doação via PayPal (Dev)</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="bg-white p-2 rounded-xl shadow border border-slate-200 dark:border-gray-700 mb-2 flex items-center justify-center min-h-[130px] w-[140px]">
+                            <img id="dev-paypal-qr-img" src="" alt="QR Code PayPal Dev" class="w-28 h-28 object-contain hidden" />
+                            <div id="dev-paypal-qr-placeholder" class="text-xs text-slate-400 text-center p-2 hidden">
+                                Carregando QR PayPal...
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-600 dark:text-slate-400 text-center mb-3">Escaneie o QR Code ou clique no botão abaixo para doar com cartão ou saldo PayPal:</p>
+                        <div class="flex justify-center w-full">
+                            <a id="dev-paypal-link-btn" href="https://www.paypal.com/donate/?hosted_button_id=WJBLF3LV3RZRW" target="_blank" rel="noopener noreferrer" class="w-full text-center inline-flex items-center justify-center gap-2 bg-[#0070BA] hover:bg-[#003087] text-white font-bold py-2.5 px-4 rounded-lg text-xs shadow transition-all cursor-pointer">
+                                <span>💳</span> <span>Doar com PayPal</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- MODAL QR CODE PÚBLICO -->
+    <div id="attendee-qr-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[200] hidden backdrop-blur-sm transition-opacity">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 max-w-xl w-full mx-4 relative transform transition-all flex flex-col items-center">
+            <button id="close-attendee-qr-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <h2 class="text-3xl font-black text-indigo-600 dark:text-indigo-400 mb-2 uppercase text-center w-full">Acompanhe pelo Celular!</h2>
+            <p class="text-slate-600 dark:text-slate-300 text-center mb-6">Escaneie o QR Code abaixo para visualizar o painel de números atualizado em tempo real na sua tela.</p>
+            <div class="bg-white p-4 rounded-2xl shadow-inner mb-4 flex justify-center items-center w-64 h-64">
+                <img id="attendee-qr-image" src="" alt="QR Code do Evento" class="w-full h-full object-contain hidden" />
+                <div id="attendee-qr-loading" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
+            <a href="#" target="_blank" class="text-sm text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 text-center font-bold block break-all" id="attendee-qr-url-text">Gerando link...</a>
+<button id="attendee-open-new-tab-btn" class="mt-4 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 dark:bg-indigo-900/50 dark:hover:bg-indigo-900 dark:text-indigo-300 px-4 py-2 rounded-xl font-bold transition-colors shadow-sm w-full">Abrir em nova aba</button>
+        </div>
+    </div>
+
+    <!-- Painel Simples Controlador (Mobile) -->
+    <div id="simple-controller-overlay" class="min-h-screen bg-slate-900 hidden flex-col w-full text-white pb-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-3 sm:p-4 border-b border-slate-700 bg-slate-800 shrink-0">
+            <button id="sc-prev-game-btn" class="p-2 text-slate-400 hover:text-white rounded-full bg-slate-700 active:scale-95 transition-transform" aria-label="Rodada Anterior">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <h2 id="sc-game-name" class="text-lg font-black uppercase text-teal-400 px-2 text-center flex-1 truncate">Rodada Atual</h2>
+            <button id="sc-next-game-btn" class="p-2 text-slate-400 hover:text-white rounded-full bg-slate-700 active:scale-95 transition-transform" aria-label="Próxima Rodada">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+            </button>
+            <button id="sc-close-btn" class="p-2 text-slate-400 hover:text-white rounded-full bg-slate-700 ml-2 active:scale-95 transition-transform" aria-label="Fechar">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        
+        <!-- Main Area -->
+        <div class="flex-1 overflow-y-auto p-4 flex flex-col items-center pb-[180px]">
+            
+            <div id="sc-status-message" class="text-yellow-400 font-bold mb-4 text-center text-sm hidden"></div>
+            
+            <div class="w-full max-w-sm bg-slate-800 border border-slate-700 rounded-xl p-4 sm:p-6 shadow-lg flex flex-col items-center justify-center relative overflow-hidden transition-colors duration-500 min-h-[160px] mb-4 sm:mb-6" id="sc-last-card">
+                <span class="absolute top-3 left-3 text-xs font-black text-teal-400 uppercase tracking-widest z-10">Último Sorteado</span>
+                
+                <!-- Bola no estilo do attendee (público) -->
+                <div id="sc-last-number-ball" class="w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center shadow-2xl border-[5px] border-teal-500 transition-colors duration-500 relative overflow-hidden bg-slate-900 my-2">
+                    <div class="absolute inset-0 rounded-full opacity-40 bg-gradient-to-br from-white/60 to-transparent mix-blend-overlay"></div>
+                    <div class="absolute bottom-0 right-0 w-full h-1/2 bg-black/30 rounded-b-full"></div>
+                    <div id="sc-last-number" class="text-5xl sm:text-6xl font-black text-white tracking-tighter z-10 drop-shadow-md">
+                        --
+                    </div>
+                </div>
+            </div>
+
+            <!-- Últimos 3 Sorteados -->
+            <div class="w-full max-w-sm bg-slate-800 border border-slate-700 rounded-xl p-3 sm:p-4 shadow-lg flex flex-col relative overflow-hidden transition-colors duration-500 mb-4 sm:mb-6" id="sc-recent-card">
+                <span class="w-full text-left text-xs font-black text-teal-400 uppercase tracking-widest mb-2 z-10">Últimos 3 Sorteados</span>
+                <div id="sc-recent-numbers" class="bg-slate-900 border border-slate-700 rounded-lg p-2 text-center min-h-[50px] flex items-center justify-center gap-3 z-10 transition-colors duration-500">
+                    <span class="text-slate-500 font-bold text-sm">Aguardando sorteio</span>
+                </div>
+            </div>
+
+            <!-- Premiações -->
+            <div class="w-full max-w-sm bg-slate-800 border border-slate-700 rounded-xl p-3 sm:p-4 shadow-lg flex flex-col mb-4 sm:mb-6">
+                <span class="w-full text-left text-xs font-black text-amber-400 uppercase tracking-widest mb-2 z-10">Premiações da Rodada</span>
+                <div id="sc-prizes-list" class="flex flex-col gap-2 mb-3 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
+                    <span class="text-slate-500 text-sm text-center">Nenhuma premiação definida</span>
+                </div>
+                <button id="sc-verify-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                    VERIFICAR CARTELA GANHADORA
+                </button>
+            </div>
+            
+            <!-- Board -->
+            <div class="w-full max-w-sm bg-slate-800 p-0 rounded-xl border border-slate-700 overflow-hidden shadow-lg mb-4 sm:mb-6">
+                <div class="bg-slate-900 p-3 text-slate-400 text-xs font-black uppercase flex justify-between border-b border-slate-700">
+                    <span>Números Sorteados</span>
+                    <span id="sc-drawn-count">0/75</span>
+                </div>
+                <div id="sc-board-rows" class="flex flex-col gap-1 relative overflow-hidden transition-colors duration-500 bg-slate-800 p-2">
+                    <span class="text-slate-500 text-sm p-4 text-center w-full">Nenhum sorteio ainda</span>
+                </div>
+            </div>
+            
+            <div class="mt-8 flex flex-col items-center opacity-90 px-4 text-center">
+                <img src="/icon.svg" alt="App Icon" class="w-12 h-12 mb-4 opacity-75 grayscale">
+                <p class="text-[10px] text-slate-400 mb-2 max-w-sm">
+                    Este programa é o resultado do Trabalho de Conclusão de Curso de <a href="https://www.instagram.com/oalison.rodrigues" target="_blank" class="text-teal-400 hover:underline">Alison Fernando Rodrigues dos Santos</a>, sob orientação do <a href="https://www.instagram.com/danilonobresant" target="_blank" class="text-teal-400 hover:underline">Prof. Pe. Dr. Danilo Nobre dos Santos</a> Título: "E O VERBO SE FEZ I.A.? DA REFLEXÃO TEOLÓGICA E COMUNICATIVA AO DESENVOLVIMENTO DE SOLUÇÕES PASTORAIS COM INTELIGÊNCIA ARTIFICIAL". (<a href="https://drive.google.com/file/d/14uPBeHCT5aP1ACPLlPpIjfD5J1iLQfyD/view?usp=drive_link" target="_blank" class="text-teal-400 hover:underline">Link para acessar</a>)
+                </p>
+                <p class="text-[10px] text-slate-500 max-w-sm">
+                    Desenvolvido inteiramente com a Inteligência Artificial Gemini 3.1 PRO da Google, este projeto demonstra como é possível criar soluções pastorais inovadoras com criatividade e ferramentas de baixo custo ou gratuitas, mesmo sem conhecimentos prévios em programação.
+                </p>
+                <div class="mt-4 text-[10px] text-slate-500 font-bold">
+                    Versão <span id="sc-version-display">7.8</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Fixed Bottom Actions -->
+        <div class="absolute bottom-0 left-0 w-full p-4 bg-slate-800 border-t border-slate-700 flex flex-col gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.4)] z-20">
+            <button id="sc-draw-btn" class="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-black text-xl py-4 sm:py-5 rounded-xl shadow-[0_6px_0_rgba(4,120,87,1)] active:translate-y-1 active:shadow-none transition-all">
+                SORTEAR BOLA
+            </button>
+            <div class="flex gap-2">
+                <button id="sc-prize-draw-btn" class="w-1/2 bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-95 border border-amber-500 text-xs sm:text-sm shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zm7-10a1 1 0 01.707.293l.707.707L15.828 2.5a1 1 0 111.414 1.414l-1.414 1.414.707.707a1 1 0 01-1.414 1.414l-.707-.707-1.414 1.414a1 1 0 01-1.414-1.414l.707-.707-.707-.707A1 1 0 0112 2zM12 11a1 1 0 01.707.293l.707.707L14.828 11.5a1 1 0 111.414 1.414l-1.414 1.414.707.707a1 1 0 01-1.414 1.414l-.707-.707-1.414 1.414a1 1 0 01-1.414-1.414l.707-.707-.707-.707A1 1 0 0112 11z" clip-rule="evenodd" /></svg>
+                    SORTEIO BRINDES
+                </button>
+                <button id="sc-claims-btn" class="w-1/2 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-1 transition-transform active:scale-95 border border-slate-600 text-xs sm:text-sm shadow-md">
+                    VOLTAR AO PC
+                </button>
+            </div>
+        </div>
+    </div>
+
+<div id="sc-prize-draw-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-[400] hidden">
+    <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-sm flex flex-col border border-slate-700 shadow-2xl">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-amber-400 uppercase">Sortear Brinde</h3>
+            <button id="close-sc-prize-modal" class="text-slate-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+        </div>
+        <div class="flex flex-col gap-3">
+            <div id="sc-prize-display-container" class="w-full flex items-center justify-center py-4 hidden"></div>
+            <div class="flex gap-2">
+                <div class="flex-1">
+                    <label class="text-xs text-slate-400">De:</label>
+                    <input type="number" id="sc-prize-min" value="1" class="w-full text-center text-lg font-bold p-2 bg-slate-900 border border-slate-600 rounded-lg text-white">
+                </div>
+                <div class="flex-1">
+                    <label class="text-xs text-slate-400">Até:</label>
+                    <input type="number" id="sc-prize-max" value="500" class="w-full text-center text-lg font-bold p-2 bg-slate-900 border border-slate-600 rounded-lg text-white">
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="sc-no-repeat" class="w-4 h-4 rounded border-slate-600">
+                <label for="sc-no-repeat" class="text-sm text-slate-300">Não repetir sorteados</label>
+            </div>
+            <div>
+                <label class="text-xs text-slate-400">Patrocinador do Brinde (Opcional):</label>
+                <input type="text" id="sc-prize-sponsor" placeholder="Nome do patrocinador..." class="w-full text-center text-sm font-bold p-2 bg-slate-900 border border-amber-500/50 rounded-lg text-amber-300 placeholder:text-amber-500/50">
+            </div>
+            <button id="sc-do-prize-draw" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 rounded-xl text-lg shadow-lg mt-2 active:scale-95 transition-transform">
+                🎁 GERAR NÚMERO
+            </button>
+            <button id="sc-view-prizes-btn" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm shadow-lg mt-1 active:scale-95 transition-transform">
+                🧐 VER SORTEADOS
+            </button>
+        </div>
+    </div>
+</div>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>

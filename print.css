@@ -1,0 +1,202 @@
+/* print.css - Estilos Otimizados para Impressão do Relatório do Bingo Show */
+
+@media print {
+    /* --- CONFIGURAÇÕES GERAIS DA PÁGINA --- */
+    @page {
+        size: A4;
+        margin: 2cm; /* Margens adequadas para um documento */
+    }
+
+    body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        background: #ffffff !important;
+        color: #000000 !important;
+        -webkit-print-color-adjust: exact !important; /* Força a impressão de cores de fundo (para números sorteados) */
+        print-color-adjust: exact !important;
+    }
+
+    /* --- ESCONDE ELEMENTOS DA INTERFACE --- */
+    header,
+    body > footer,
+    #confetti-canvas,
+    div[id*="-modal"],
+    button,
+    input,
+    form,
+    a[href],
+    label[for*="slider"],
+    label[for*="upload"],
+    label[for="load-local-input"],
+    #shortcuts-legend,
+    #main-display-label,
+    #current-number-wrapper,
+    #last-numbers-display,
+    #prize-draw-section,
+    #auction-form,
+    #controls-panel-left {
+        display: none !important;
+    }
+
+    /* --- REESTRUTURAÇÃO DO LAYOUT PRINCIPAL --- */
+    main {
+        display: flex !important;
+        flex-direction: column !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    main > * { /* Transforma as colunas do grid em blocos verticais */
+        display: block !important;
+        width: 100% !important;
+        float: none !important;
+        margin-bottom: 1.5cm;
+    }
+
+    section, aside {
+        box-shadow: none !important;
+        border: none !important;
+        background: none !important;
+        padding: 0 !important;
+        page-break-inside: avoid;
+    }
+    
+    h1, h2, h3 {
+        color: #000 !important;
+        font-family: 'Helvetica', 'Arial', sans-serif;
+    }
+
+    h2 {
+        font-size: 18pt;
+        border-bottom: 2px solid #333;
+        padding-bottom: 5px;
+        margin-bottom: 15px;
+        page-break-after: avoid; /* Evita que o título fique sozinho no final da página */
+    }
+    
+    /* Reordena as seções para um layout de relatório lógico */
+    .lg\:col-span-3 { order: 1; } /* Centro (Painel) */
+    main > aside:first-of-type { order: 2; } /* Esquerda (Vencedores) */
+    main > aside:last-of-type { order: 3; } /* Direita (Rodadas) */
+
+
+    /* --- ESTILIZAÇÃO DAS SEÇÕES ESPECÍFICAS --- */
+
+    /* 1. SEÇÃO DE VENCEDORES */
+    main > aside:first-of-type > *:not(h2, #winners-container) {
+        display: none !important; /* Esconde tudo na barra esquerda exceto o título e a lista de vencedores */
+    }
+    #winners-container {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+        columns: 2; /* Exibe os vencedores em duas colunas para economizar espaço */
+        gap: 20px;
+    }
+    .winner-card {
+        background: #f3f4f6 !important;
+        color: #000 !important;
+        border: 1px solid #ccc;
+        border-radius: 0 !important;
+        padding: 10px;
+        margin-bottom: 10px;
+        -webkit-column-break-inside: avoid; /* Evita que o card seja quebrado entre colunas/páginas */
+        page-break-inside: avoid;
+    }
+    .winner-card h4, .winner-card p {
+        color: #000 !important;
+        font-size: 11pt;
+    }
+    .winner-card h4 { font-weight: bold; }
+    .winner-card .text-amber-300 { font-style: italic; }
+
+    /* 2. PAINEL DE BINGO E RODADA ATIVA */
+    #active-round-panel {
+        display: block !important;
+        background: #f3f4f6 !important;
+        border: 1px solid #ccc;
+        padding: 10px !important;
+        margin-bottom: 1cm;
+        text-align: center;
+    }
+     #active-round-panel *, #no-active-round-panel {
+        color: #000 !important;
+     }
+
+    #bingo-board-wrapper {
+        transform: scale(1) !important;
+        overflow: visible !important;
+    }
+    #bingo-board {
+        gap: 5px !important;
+    }
+    .bingo-cell {
+        width: 1.4cm !important;
+        height: 1.4cm !important;
+        font-size: 12pt !important;
+        font-weight: bold;
+        border: 1px solid #999 !important;
+        color: #000 !important;
+        background-color: #fff !important;
+        border-radius: 4px !important; /* Quadrado é melhor para alinhamento em impressão */
+    }
+    .bingo-cell.has-sponsor::after { display: none !important; }
+    
+    /* Números sorteados */
+    .bingo-cell.scale-125 {
+        background-color: #333 !important;
+        color: #fff !important;
+        transform: scale(1) !important;
+    }
+
+    /* 3. SEÇÃO DE RODADAS E PRÊMIOS */
+    main > aside:last-of-type > *:not(.flex-grow) {
+        display: none !important; /* Esconde tudo na barra direita exceto a lista de rodadas */
+    }
+    #games-list {
+        display: block !important;
+        columns: 2;
+        gap: 20px;
+    }
+    .game-item {
+        background: #f3f4f6 !important;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 10px;
+        page-break-inside: avoid;
+        -webkit-column-break-inside: avoid;
+        opacity: 1 !important;
+        border-radius: 0 !important;
+    }
+    .game-item h3, .game-item label, .game-item input {
+         color: #000 !important;
+    }
+     .game-item input {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        font-weight: normal !important;
+     }
+
+    /* --- RODAPÉ DE IMPRESSÃO --- */
+    #print-footer {
+        display: block !important;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 10px 20px;
+        border-top: 1px solid #ccc;
+        background-color: #fff;
+        font-size: 8pt;
+    }
+    #print-footer .content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    #print-footer .info p { margin: 0; }
+    #print-footer .qr-code { text-align: center; }
+    #print-footer .qr-code img { width: 60px; height: 60px; }
+    #print-footer .qr-code p { margin: 0; font-size: 7pt; }
+}

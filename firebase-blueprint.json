@@ -1,0 +1,72 @@
+{
+  "entities": {
+    "Event": {
+      "title": "Event",
+      "description": "Represents a Bingo event managed by a host",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "description": "The UID of the host who created the event"
+        },
+        "activeGameNumber": {
+          "type": "string",
+          "description": "The ID of the currently active game/round"
+        },
+        "appName": {
+          "type": "string",
+          "description": "Name of the app/event"
+        },
+        "bingoTitle": {
+          "type": "string",
+          "description": "Title, like BINGO or AJUDE"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Timestamp"
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Timestamp"
+        }
+      },
+      "required": ["hostId", "createdAt", "updatedAt"]
+    },
+    "Game": {
+      "title": "Game",
+      "description": "A specific round of Bingo in an Event",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "color": { "type": "string" },
+        "calledNumbers": { "type": "array", "items": { "type": "number" } },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["updatedAt"]
+    },
+    "Card": {
+      "title": "Card",
+      "description": "A generated Bingo card for a specific event",
+      "type": "object",
+      "properties": {
+        "series": { "type": "number" },
+        "numbersString": { "type": "string", "description": "JSON string of 5x5 numbers array to save space" }
+      },
+      "required": ["series", "numbersString"]
+    }
+  },
+  "firestore": {
+    "events/{eventId}": {
+      "schema": { "$ref": "#/entities/Event" },
+      "description": "The main event documents"
+    },
+    "events/{eventId}/games/{gameId}": {
+      "schema": { "$ref": "#/entities/Game" },
+      "description": "The games (rounds) in an event"
+    },
+    "events/{eventId}/cards/{cardId}": {
+      "schema": { "$ref": "#/entities/Card" },
+      "description": "The cards generated for an event"
+    }
+  }
+}

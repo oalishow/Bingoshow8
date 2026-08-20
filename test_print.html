@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<body>
+<button onclick="printIframe()">Print Iframe</button>
+<script>
+function printIframe() {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    document.body.appendChild(iframe);
+    iframe.contentDocument.write('<html><body><h1>Hello from Iframe</h1><script>setTimeout(() => { window.print(); }, 500);</script></body></html>');
+    iframe.contentDocument.close();
+}
+</script>
+</body>
+</html>
