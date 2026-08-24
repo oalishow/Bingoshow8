@@ -395,10 +395,18 @@
     
     <div class="flex flex-col min-h-screen">
         <header class="text-center py-4 flex-shrink-0 relative mt-6">
-            <button id="theme-toggle-main-btn" class="absolute top-0 right-4 p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors h-10 w-10 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm" title="Alternar Modo Claro/Escuro">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-            </button>
+            <div class="absolute top-0 right-4 flex items-center gap-2">
+                <button id="check-update-main-btn" class="p-2 text-indigo-600 hover:text-indigo-800 dark:text-sky-400 dark:hover:text-sky-300 transition-all h-10 px-3 flex items-center justify-center gap-1.5 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-slate-200 dark:border-gray-700 text-xs font-bold hover:scale-105 cursor-pointer" title="Conferir se há atualizações do programa">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span class="hidden sm:inline">Conferir Atualização</span>
+                </button>
+                <button id="theme-toggle-main-btn" class="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors h-10 w-10 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm border border-slate-200 dark:border-gray-700 cursor-pointer" title="Alternar Modo Claro/Escuro">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                </button>
+            </div>
             <div class="flex flex-col items-center justify-center">
                 <!-- App Logo (será preenchido dinamicamente) -->
                 <div id="app-logo" class="w-32 h-32 sm:w-48 sm:h-48 mb-2 logo-animation">
@@ -564,7 +572,7 @@
                     <div class="mt-4 grid grid-cols-3 gap-2">
                     <button id="auto-draw-btn-bottom" class="w-full min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 min-h-[44px] px-4 rounded-xl text-sm shadow-lg transition-transform transform hover:scale-105" data-label-key="autoDrawButton">🎰 Sorteio Automático</button>
                          <button id="verify-btn-bottom" class="w-full min-h-[44px] bg-green-600 hover:bg-green-700 text-white font-bold py-2 min-h-[44px] px-4 rounded-xl text-sm shadow-lg transition-transform transform hover:scale-105" data-label-key="verifyButton">✅ Verificar</button>
-                         <button id="clear-round-btn-bottom" class="w-full min-h-[44px] bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 min-h-[44px] px-4 rounded-xl text-sm shadow-lg transition-transform transform hover:scale-105" data-label-key="clearRoundButton">🧹 Limpar Rodada</button>
+                         <button id="clear-round-btn-bottom" class="w-full min-h-[44px] bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 min-h-[44px] px-4 rounded-xl text-sm shadow-lg transition-transform transform hover:scale-105" data-label-key="clearRoundButton">🧹 Limpar Números Sorteados</button>
                     </div>
                 </section>
                 
@@ -598,7 +606,7 @@
                         <div class="grid grid-cols-1 gap-2">
                             <button id="auto-draw-btn-top" class="w-full min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 min-h-[44px] px-3 text-xs rounded-lg shadow-lg" data-label-key="autoDrawButton">🎰 Sorteio Automático</button>
                             <button id="verify-btn-top" class="w-full min-h-[44px] bg-green-600 hover:bg-green-700 text-white font-bold py-2 min-h-[44px] px-3 text-xs rounded-lg shadow-lg" data-label-key="verifyButton">✅ Verificar</button>
-                            <button id="clear-round-btn-top" class="w-full min-h-[44px] bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 min-h-[44px] px-3 text-xs rounded-lg shadow-lg" data-label-key="clearRoundButton">🧹 Limpar Rodada</button>
+                            <button id="clear-round-btn-top" class="w-full min-h-[44px] bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 min-h-[44px] px-3 text-xs rounded-lg shadow-lg" data-label-key="clearRoundButton">🧹 Limpar Números Sorteados</button>
                         </div>
                     </div>
                     
@@ -699,11 +707,14 @@
                                     <input type="checkbox" id="no-repeat-prize-draw" class="h-3 w-3 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                                     <label for="no-repeat-prize-draw" data-label-key="noRepeatCheckboxLabel">Não repetir sorteados</label>
                                 </div>
+                                <div class="flex items-center justify-center gap-2 text-xs text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 py-1.5 px-2 rounded-lg border border-purple-200 dark:border-purple-800/50">
+                                    <input type="checkbox" id="enable-prize-card-sponsor" class="h-3.5 w-3.5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer">
+                                    <label for="enable-prize-card-sponsor" class="font-bold cursor-pointer select-none">🎁 Habilitar Patrocinador da Cartela</label>
+                                </div>
                                 <button type="button" id="prize-draw-random-btn" class="w-full min-h-[44px] bg-purple-600 hover:bg-purple-700 text-white font-bold p-3 rounded-lg text-lg shadow-lg mt-1" data-label-key="prizeDrawRandomButton">🎁 Sortear</button>
                                 <input type="text" id="prize-draw-number-manual" data-label-key="prizeDrawTicketNumberPlaceholder" placeholder="Nº Cartela" class="text-center text-base font-bold p-2 border-2 border-slate-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 mt-2">
                                 <input type="text" id="prize-draw-name" data-label-key="prizeDrawNamePlaceholder" placeholder="Nome (Opcional)" class="text-center text-base font-bold p-2 border-2 border-slate-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
                                 <input type="text" id="prize-draw-description" data-label-key="prizeDrawDescriptionPlaceholder" placeholder="Brinde (Opcional)" class="text-center text-base font-bold p-2 border-2 border-slate-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
-                                <input type="text" id="prize-draw-sponsor" placeholder="Patrocinador / Doador (Opcional)" class="text-center text-base font-bold p-2 border-2 border-amber-300 dark:border-amber-600/70 bg-amber-50 dark:bg-amber-950/30 text-slate-800 dark:text-amber-200 placeholder:text-amber-600/60 dark:placeholder:text-amber-400/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
                                 <button type="submit" class="w-full min-h-[44px] bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 min-h-[44px] px-4 rounded-xl text-sm shadow-lg mt-1" data-label-key="registerPrizeButton">📝 Registrar Brinde</button>
                             </form>
                         </div>
@@ -773,6 +784,7 @@
     <div id="card-scanner-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
     <div id="sponsor-image-editor-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70] hidden"></div>
     <div id="interval-qr-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-[120] hidden"></div>
+    <div id="prize-sponsor-display-modal" class="fixed inset-0 bg-black/90 flex items-center justify-center p-4 sm:p-6 overflow-y-auto z-[450] hidden backdrop-blur-md"></div>
 
     <!-- Rodapé para Impressão -->
     <div id="print-footer" class="hidden">
@@ -836,6 +848,14 @@
                             </a>
                         </div>
                     </div>
+                </div>
+
+                <!-- CONTATO / REDES SOCIAIS DEV -->
+                <div class="border border-pink-200 dark:border-pink-900/60 bg-pink-50/50 dark:bg-pink-950/20 p-3 rounded-xl text-center">
+                    <p class="text-xs text-slate-700 dark:text-slate-300 font-semibold mb-1">Dúvidas, sugestões ou contato direto:</p>
+                    <a id="dev-instagram-link-btn" href="https://www.instagram.com/oalison.rodrigues" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-500 hover:opacity-90 text-white font-bold py-2 px-4 rounded-lg text-xs shadow transition-all cursor-pointer">
+                        <span>📸</span> <span id="dev-instagram-display">Instagram: @oalison.rodrigues</span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -905,9 +925,12 @@
                 <div id="sc-prizes-list" class="flex flex-col gap-2 mb-3 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
                     <span class="text-slate-500 text-sm text-center">Nenhuma premiação definida</span>
                 </div>
-                <button id="sc-verify-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md text-sm">
+                <button id="sc-verify-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md text-sm cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
                     VERIFICAR CARTELA GANHADORA
+                </button>
+                <button id="sc-clear-numbers-btn" class="w-full mt-2 bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md text-xs sm:text-sm cursor-pointer">
+                    🧹 Limpar Números Sorteados
                 </button>
             </div>
             
@@ -974,6 +997,10 @@
             <div class="flex items-center gap-2">
                 <input type="checkbox" id="sc-no-repeat" class="w-4 h-4 rounded border-slate-600">
                 <label for="sc-no-repeat" class="text-sm text-slate-300">Não repetir sorteados</label>
+            </div>
+            <div class="flex items-center gap-2 bg-purple-950/60 p-2 rounded-lg border border-purple-800/50">
+                <input type="checkbox" id="sc-enable-prize-sponsor" class="w-4 h-4 rounded border-slate-600 text-purple-600">
+                <label for="sc-enable-prize-sponsor" class="text-xs font-bold text-purple-300 cursor-pointer">🎁 Habilitar Patrocinador da Cartela</label>
             </div>
             <div>
                 <label class="text-xs text-slate-400">Patrocinador do Brinde (Opcional):</label>

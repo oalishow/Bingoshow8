@@ -31,9 +31,25 @@ export default defineConfig(({ mode }) => {
           },
           workbox: {
             cleanupOutdatedCaches: true,
-            navigateFallbackDenylist: [/attendee\.html/],
-            globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+            navigateFallbackDenylist: [/attendee\.html/, /attendee/],
+            globPatterns: ['**/*.{js,css,ico,png,svg,json}', 'index.html'],
+            globIgnores: ['**/attendee.html'],
             runtimeCaching: [
+              {
+                urlPattern: /attendee\.html/i,
+                handler: 'NetworkFirst',
+                options: {
+                  cacheName: 'attendee-html-cache',
+                  networkTimeoutSeconds: 3,
+                  expiration: {
+                    maxEntries: 10,
+                    maxAgeSeconds: 60 * 60 * 24 * 7
+                  },
+                  cacheableResponse: {
+                    statuses: [0, 200]
+                  }
+                }
+              },
               {
                 urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
                 handler: 'CacheFirst',

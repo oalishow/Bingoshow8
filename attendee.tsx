@@ -11,8 +11,41 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
 import { getFirestore, doc, onSnapshot, collection, addDoc } from 'firebase/firestore';
 import QRCode from 'qrcode';
+import { registerSW } from 'virtual:pwa-register';
 import firebaseConfig from './firebase-applet-config.json';
 import './index.css';
+
+// Auto reload on stale chunk or module load errors after app updates
+window.addEventListener('error', (event) => {
+    const msg = (event.message || '') + ' ' + (event.error?.message || '');
+    if (
+        msg.includes('Loading chunk') ||
+        msg.includes('Failed to fetch dynamically imported module') ||
+        msg.includes('Importing a module script failed') ||
+        msg.includes('is not a valid JavaScript MIME type') ||
+        msg.includes('error loading dynamically imported module')
+    ) {
+        console.warn('[Attendee] Chunk desatualizado detectado pós-atualização. Recarregando painel público...');
+        window.location.reload();
+    }
+});
+
+try {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+        registerSW({
+            immediate: true,
+            onNeedRefresh() {
+                console.log('[Attendee] Nova versão do app detectada, atualizando...');
+                window.location.reload();
+            },
+            onOfflineReady() {
+                console.log('[Attendee] Painel público pronto para uso offline');
+            }
+        });
+    }
+} catch (e) {
+    console.warn('[Attendee] Service worker skipped:', e);
+}
 
 const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
@@ -57,8 +90,19 @@ async function initializeAttendeeApp() {
         }
     });
     const urlParams = new URLSearchParams(window.location.search);
-    const targetEventId = urlParams.get('event');
+    let targetEventId = urlParams.get('event')?.trim();
     
+    // Tenta recuperar do storage local caso tenha aberto sem query param
+    if (!targetEventId) {
+        try {
+            targetEventId = localStorage.getItem('last_bingo_event_id') || '';
+        } catch (e) {}
+    } else {
+        try {
+            localStorage.setItem('last_bingo_event_id', targetEventId);
+        } catch (e) {}
+    }
+
     const statusBanner = document.getElementById('attendee-status-banner')!;
     const contentContainer = document.getElementById('attendee-content')!;
     
@@ -97,7 +141,7 @@ async function initializeAttendeeApp() {
 
 
     if (!targetEventId) {
-        showFatalError('URL inválida. ID do evento ausente.');
+        showFatalError('Para acompanhar o sorteio ao vivo pelo Painel do Público, abra o Painel Principal do Bingo Show e clique em "Ao Vivo" ou escaneie o QR Code exibido na tela.');
         return;
     }
 
@@ -178,6 +222,108 @@ async function initializeAttendeeApp() {
     let lastRoundStatusStr = '';
     let lastLabelsStr = '';
     let lastWinnersStr = '';
+    let lastSponsorsStr = '';
+
+    function updateSponsorsDisplay(config: any, activeCalledNumber?: number | null) {
+        const sponsorsSection = document.getElementById('attendee-sponsors-section');
+        const sponsorsList = document.getElementById('attendee-sponsors-list');
+        const waitingSponsorsSection = document.getElementById('waiting-sponsors-section');
+        const waitingSponsorsList = document.getElementById('waiting-sponsors-list');
+        const lastSponsorBadge = document.getElementById('attendee-last-sponsor-badge');
+
+        if (!config || config.showSponsorsOnMobile !== true) {
+            if (sponsorsSection) sponsorsSection.classList.add('hidden');
+            if (waitingSponsorsSection) waitingSponsorsSection.classList.add('hidden');
+            if (lastSponsorBadge) lastSponsorBadge.remove();
+            return;
+        }
+
+        // Collect all sponsors
+        const sponsorItems: { name: string; type?: string; image?: string }[] = [];
+        const seenNames = new Set<string>();
+
+        const addSponsor = (name?: string, type?: string, image?: string) => {
+            if (!name || typeof name !== 'string') return;
+            const cleanName = name.trim();
+            if (!cleanName || seenNames.has(cleanName.toLowerCase())) return;
+            seenNames.add(cleanName.toLowerCase());
+            sponsorItems.push({ name: cleanName, type, image });
+        };
+
+        if (config.globalSponsor?.name) {
+            addSponsor(config.globalSponsor.name, 'Patrocinador Master', config.globalSponsor.image);
+        }
+
+        if (Array.isArray(config.generalSponsors)) {
+            config.generalSponsors.forEach((sp: any) => {
+                if (sp && sp.name) addSponsor(sp.name, 'Patrocinador', sp.image);
+            });
+        }
+
+        if (config.extraCardSponsor?.name) {
+            addSponsor(config.extraCardSponsor.name, 'Apoiador Oficial', config.extraCardSponsor.image);
+        }
+
+        if (config.prizeDrawSponsor?.name) {
+            addSponsor(config.prizeDrawSponsor.name, 'Patrocinador de Prêmios', config.prizeDrawSponsor.image);
+        }
+
+        if (config.sponsorsByNumber && typeof config.sponsorsByNumber === 'object') {
+            Object.values(config.sponsorsByNumber).forEach((sp: any) => {
+                if (sp && sp.name) addSponsor(sp.name, 'Apoiador', sp.image);
+            });
+        }
+
+        if (sponsorItems.length === 0) {
+            if (sponsorsSection) sponsorsSection.classList.add('hidden');
+            if (waitingSponsorsSection) waitingSponsorsSection.classList.add('hidden');
+        } else {
+            if (sponsorsSection && sponsorsList) {
+                sponsorsSection.classList.remove('hidden');
+                sponsorsList.innerHTML = sponsorItems.map(sp => `
+                    <div class="flex items-center gap-2.5 p-2 bg-brand-bg rounded-lg border border-brand-border/80 shadow-sm">
+                        ${sp.image ? `<img src="${sp.image}" alt="${sp.name}" class="w-8 h-8 object-contain rounded bg-white p-0.5" />` : `<div class="w-8 h-8 rounded-md bg-amber-500/10 dark:bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm">🏢</div>`}
+                        <div class="flex flex-col min-w-0 flex-1">
+                            <span class="text-xs sm:text-sm font-black text-slate-800 dark:text-white truncate">${sp.name}</span>
+                            ${sp.type ? `<span class="text-[10px] font-bold text-amber-500 uppercase tracking-wider">${sp.type}</span>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            if (waitingSponsorsSection && waitingSponsorsList) {
+                waitingSponsorsSection.classList.remove('hidden');
+                waitingSponsorsSection.classList.add('flex');
+                waitingSponsorsList.innerHTML = sponsorItems.map(sp => `
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-card/90 rounded-full border border-brand-border text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm">
+                        <span>🏢</span> ${sp.name}
+                    </span>
+                `).join('');
+            }
+        }
+
+        // Number-specific sponsor badge for the last drawn ball
+        if (activeCalledNumber && config.sponsorsByNumber && config.sponsorsByNumber[activeCalledNumber]) {
+            const numSponsor = config.sponsorsByNumber[activeCalledNumber];
+            if (numSponsor && numSponsor.name) {
+                const lastCard = document.getElementById('attendee-last-card');
+                let badge = document.getElementById('attendee-last-sponsor-badge');
+                if (!badge && lastCard) {
+                    badge = document.createElement('div');
+                    badge.id = 'attendee-last-sponsor-badge';
+                    lastCard.appendChild(badge);
+                }
+                if (badge) {
+                    badge.className = 'mt-2 text-xs font-bold text-amber-500 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30 flex items-center gap-1.5 animate-bounce-in z-10';
+                    badge.innerHTML = `<span>🎁 Patrocinador:</span> <strong class="text-slate-800 dark:text-white">${numSponsor.name}</strong>`;
+                }
+            } else if (lastSponsorBadge) {
+                lastSponsorBadge.remove();
+            }
+        } else if (lastSponsorBadge) {
+            lastSponsorBadge.remove();
+        }
+    }
 
     onSnapshot(doc(db, "events", targetEventId), (docSnap) => {
         if (docSnap.exists()) {
@@ -204,6 +350,7 @@ async function initializeAttendeeApp() {
                         } else {
                             waitingLogo.classList.add('hidden');
                         }
+                        updateSponsorsDisplay(config);
                     } catch(e) {}
                 }
                 
@@ -402,12 +549,12 @@ async function initializeAttendeeApp() {
                                 setTimeout(() => {
                                     overlayEl.classList.add("hidden");
                                     overlayEl.classList.remove("flex");
-                                }, 4000);
+                                }, 3000);
                             };
                                
                             if (isNewBingo) {
                                 // Delay Nova Rodada until BINGO modal finishes
-                                setTimeout(showNovaRodada, 8000);
+                                setTimeout(showNovaRodada, 4000);
                             } else {
                                 showNovaRodada();
                             }
@@ -416,7 +563,7 @@ async function initializeAttendeeApp() {
 
                         if (state.latestBingoTimestamp && state.latestBingoTimestamp !== lastBingoTs) {
                             if ((window as any).confetti) {
-                                const duration = 5 * 1000;
+                                const duration = 4 * 1000;
                                 const animationEnd = Date.now() + duration;
                                 const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 60 };
                                 const interval: any = setInterval(function() {
@@ -443,7 +590,7 @@ async function initializeAttendeeApp() {
                                 setTimeout(() => {
                                     bingoOverlayEl.classList.add("hidden");
                                     bingoOverlayEl.classList.remove("flex");
-                                }, 8000);
+                                }, 4000);
                             }
                         }
                         lastBingoTs = state.latestBingoTimestamp || 0;
@@ -465,7 +612,19 @@ async function initializeAttendeeApp() {
                             }
                             pendingOverlay.classList.remove('hidden');
                             pendingOverlay.classList.add('flex');
+
+                            // Fechamento automático padrão em 3 segundos
+                            if ((window as any)._pendingOverlayTimeout) {
+                                clearTimeout((window as any)._pendingOverlayTimeout);
+                            }
+                            (window as any)._pendingOverlayTimeout = setTimeout(() => {
+                                pendingOverlay.classList.add('hidden');
+                                pendingOverlay.classList.remove('flex');
+                            }, 3000);
                         } else {
+                            if ((window as any)._pendingOverlayTimeout) {
+                                clearTimeout((window as any)._pendingOverlayTimeout);
+                            }
                             pendingOverlay.classList.add('hidden');
                             pendingOverlay.classList.remove('flex');
                         }
@@ -505,8 +664,8 @@ async function initializeAttendeeApp() {
                                     overlayMsgEl.style.fontSize = ""; // reset
                                     overlayMsgEl.style.color = ""; // reset
                                 }
-                            }, 8000); // Show for 8 seconds
-                        }, 4000); // Delay 4 seconds
+                            }, 3000); // Exibição padrão de 3 segundos
+                        }, 2000);
                     }
 
                     let verifyStr = JSON.stringify(state.isVerifying || false);
@@ -600,8 +759,20 @@ async function initializeAttendeeApp() {
                     }
 
                     // Called Numbers and Grid logic
-                    const calledNumbers: number[] = game ? (game.calledNumbers || []) : [];
-                    const numbersStr = JSON.stringify({ called: calledNumbers, letters: config.bingoTitle, color: game ? game.color : '#38bdf8', verified: game ? game.verifiedWinningCards : [] });
+                    const rawCalledNumbers: number[] = game ? (game.calledNumbers || []) : [];
+                    const pendingNum = state.pendingNumber;
+                    const calledNumbers: number[] = [...rawCalledNumbers];
+                    if (pendingNum && typeof pendingNum === 'number' && !calledNumbers.includes(pendingNum)) {
+                        calledNumbers.push(pendingNum);
+                    }
+
+                    const numbersStr = JSON.stringify({ 
+                        called: calledNumbers, 
+                        pending: state.pendingNumber, 
+                        letters: config.bingoTitle, 
+                        color: game ? game.color : '#38bdf8', 
+                        verified: game ? game.verifiedWinningCards : [] 
+                    });
                     if (lastNumbersStr !== numbersStr) {
                         lastNumbersStr = numbersStr;
 
@@ -625,10 +796,11 @@ async function initializeAttendeeApp() {
                             });
                         }
                            
-                        const isNewNumber = calledNumbers.length > previousDrawnCount;
+                        const isNewNumber = calledNumbers.length > previousDrawnCount || (pendingNum && (window as any)._lastPendingNum !== pendingNum);
                         previousDrawnCount = calledNumbers.length;
+                        (window as any)._lastPendingNum = pendingNum;
                            
-                                                // Atualizar Último Sorteado
+                        // Atualizar Último Sorteado
                         const hasWinners = game && game.winners && game.winners.length > 0;
                         const lastWinner = hasWinners ? game.winners[game.winners.length - 1] : null;
                         const hasVerifiedCards = game && game.verifiedWinningCards && game.verifiedWinningCards.length > 0;
@@ -742,7 +914,7 @@ async function initializeAttendeeApp() {
                                 const numDiv = document.createElement('div');
                                 
                                 const animClass = (isLast && animNew) ? 'animate-bounce-in' : '';
-                                numDiv.className = `w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-black text-xs sm:text-sm transition-all duration-300 relative overflow-hidden ${animClass} ${isLast ? 'scale-[1.15] shadow-lg z-10' : 'bg-brand-border text-slate-300'}`;
+                                numDiv.className = `w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-black text-xs sm:text-sm transition-all duration-300 relative overflow-hidden ${animClass} ${isLast ? 'scale-[1.15] shadow-lg z-10' : 'bg-slate-200 dark:bg-brand-border text-slate-800 dark:text-slate-100 font-bold border border-slate-300 dark:border-slate-700/60 shadow-sm'}`;
                                 
                                 if (isLast) {
                                     numDiv.style.backgroundColor = activeColor;
@@ -768,12 +940,28 @@ async function initializeAttendeeApp() {
                             }
                         });
                     }
+
+                    const lastNum = calledNumbers.length > 0 ? calledNumbers[calledNumbers.length - 1] : null;
+                    updateSponsorsDisplay(config, lastNum);
                 } catch (e) {
                     console.error("Erro ao analisar estado do painel", e);
                 }
             }
         } else {
-            showFatalError('Evento não encontrado. O organizador pode ter fechado a sala.');
+            // Se o documento ainda não foi gravado na nuvem pelo host, exibe a tela de espera com mensagem informativa em vez de erro fatal
+            waitingAppName.textContent = 'Bingo Show';
+            waitingTitle.textContent = 'Aguardando Início';
+            waitingMessage.textContent = 'Conectado à sala! Aguardando o organizador iniciar a primeira rodada...';
+            contentContainer.classList.add('hidden');
+            contentContainer.classList.remove('flex');
+            waitingScreen.classList.remove('hidden');
+            waitingScreen.classList.add('flex');
+        }
+    }, (error) => {
+        console.warn("Aviso no listener do painel público (reconexão automática ativa):", error);
+        if (statusBanner) {
+            statusBanner.textContent = '🔄 Reconectando ao painel em tempo real...';
+            statusBanner.classList.remove('hidden');
         }
     });
 }
@@ -825,6 +1013,61 @@ if (winnersBtn && winnersModal && closeWinnersBtn) {
         winnersModal.classList.add('hidden');
         winnersModal.classList.remove('flex');
     });
+
+    winnersModal.addEventListener('click', (e) => {
+        if (e.target === winnersModal) {
+            winnersModal.classList.add('hidden');
+            winnersModal.classList.remove('flex');
+        }
+    });
+}
+
+// Global dismiss for Number, Bingo and General Overlays on click/tap
+const attendeePendingOverlay = document.getElementById('attendee-pending-overlay');
+if (attendeePendingOverlay) {
+    attendeePendingOverlay.addEventListener('click', () => {
+        if ((window as any)._pendingOverlayTimeout) {
+            clearTimeout((window as any)._pendingOverlayTimeout);
+        }
+        attendeePendingOverlay.classList.add('hidden');
+        attendeePendingOverlay.classList.remove('flex');
+    });
+}
+
+const attendeeGeneralOverlay = document.getElementById('attendee-overlay');
+const closeAttendeeOverlayBtn = document.getElementById('close-attendee-overlay-btn');
+if (attendeeGeneralOverlay) {
+    attendeeGeneralOverlay.addEventListener('click', (e) => {
+        if (e.target === attendeeGeneralOverlay || e.target === closeAttendeeOverlayBtn) {
+            if ((window as any)._raffleTimeout) clearTimeout((window as any)._raffleTimeout);
+            attendeeGeneralOverlay.classList.add('hidden');
+            attendeeGeneralOverlay.classList.remove('flex');
+        }
+    });
+    if (closeAttendeeOverlayBtn) {
+        closeAttendeeOverlayBtn.addEventListener('click', () => {
+            if ((window as any)._raffleTimeout) clearTimeout((window as any)._raffleTimeout);
+            attendeeGeneralOverlay.classList.add('hidden');
+            attendeeGeneralOverlay.classList.remove('flex');
+        });
+    }
+}
+
+const attendeeBingoOverlay = document.getElementById('attendee-bingo-overlay');
+const closeBingoOverlayBtn = document.getElementById('close-bingo-overlay-btn');
+if (attendeeBingoOverlay) {
+    attendeeBingoOverlay.addEventListener('click', (e) => {
+        if (e.target === attendeeBingoOverlay || e.target === closeBingoOverlayBtn) {
+            attendeeBingoOverlay.classList.add('hidden');
+            attendeeBingoOverlay.classList.remove('flex');
+        }
+    });
+    if (closeBingoOverlayBtn) {
+        closeBingoOverlayBtn.addEventListener('click', () => {
+            attendeeBingoOverlay.classList.add('hidden');
+            attendeeBingoOverlay.classList.remove('flex');
+        });
+    }
 }
 
 function updateWinnersList(gamesData: any) {
@@ -1051,6 +1294,18 @@ function initAttendeeModals() {
                 }
             }
 
+            // Dev Instagram
+            const devInstagram = currentConfig.devInstagram?.trim() || '@oalison.rodrigues';
+            const devInstagramDisplay = document.getElementById('dev-instagram-display-attendee');
+            const devInstagramLinkBtn = document.getElementById('dev-instagram-link-btn-attendee') as HTMLAnchorElement;
+            if (devInstagramDisplay) {
+                devInstagramDisplay.textContent = `Instagram: ${devInstagram}`;
+            }
+            if (devInstagramLinkBtn) {
+                const cleanHandle = devInstagram.replace(/^@/, '');
+                devInstagramLinkBtn.href = `https://www.instagram.com/${cleanHandle}`;
+            }
+
             if (devDonationModal) {
                 devDonationModal.onclick = (e) => {
                     if (e.target === devDonationModal) {
@@ -1118,6 +1373,22 @@ function initAttendeeModals() {
     const lgpdCheckbox = document.getElementById('lgpd-consent-checkbox') as HTMLInputElement;
     const confirmAuthBtn = document.getElementById('confirm-auth-btn') as HTMLButtonElement;
 
+    if (closeAuthBtn) {
+        closeAuthBtn.addEventListener('click', () => {
+            authModal?.classList.add('hidden');
+            authModal?.classList.remove('flex');
+        });
+    }
+
+    if (authModal) {
+        authModal.addEventListener('click', (e) => {
+            if (e.target === authModal) {
+                authModal.classList.add('hidden');
+                authModal.classList.remove('flex');
+            }
+        });
+    }
+
     let attendeeAuthenticated = false;
     // Custom Modal Helpers
 function showAttendeeAlert(message: string) {
@@ -1134,8 +1405,13 @@ function showAttendeeAlert(message: string) {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             okBtn.removeEventListener('click', close);
+            modal.removeEventListener('click', handleBackdrop);
+        };
+        const handleBackdrop = (e: MouseEvent) => {
+            if (e.target === modal) close();
         };
         okBtn.addEventListener('click', close);
+        modal.addEventListener('click', handleBackdrop);
     } else {
         alert(message);
     }
@@ -1157,15 +1433,21 @@ function showAttendeeConfirm(message: string, onConfirm: () => void) {
             modal.classList.remove('flex');
             okBtn.removeEventListener('click', handleOk);
             cancelBtn.removeEventListener('click', close);
+            modal.removeEventListener('click', handleBackdrop);
         };
         
         const handleOk = () => {
             close();
             onConfirm();
         };
+
+        const handleBackdrop = (e: MouseEvent) => {
+            if (e.target === modal) close();
+        };
         
         okBtn.addEventListener('click', handleOk);
         cancelBtn.addEventListener('click', close);
+        modal.addEventListener('click', handleBackdrop);
     } else {
         if (confirm(message)) {
             onConfirm();
@@ -1222,13 +1504,6 @@ let attendeeUserData: any = null;
                     sendBingoClaim();
                 });
             }
-        });
-    }
-
-    if (closeAuthBtn) {
-        closeAuthBtn.addEventListener('click', () => {
-            authModal?.classList.add('hidden');
-            authModal?.classList.remove('flex');
         });
     }
 
