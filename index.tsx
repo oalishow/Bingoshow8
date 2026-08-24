@@ -590,7 +590,15 @@ const appStore = {
             },
 
             debouncedFirebaseSync(immediate = false) {
-                if (!this.state.appConfig.onlineSyncEnabled || !eventId || !firebaseUser || this.isResetting) return;
+                if (!this.state.appConfig.onlineSyncEnabled || this.isResetting) return;
+                if (!eventId) {
+                    eventId = this.state.appConfig.eventId || safeLocalStorage.getItem('bingo_persistent_event_id') || '';
+                }
+                if (!eventId) return;
+                if (!firebaseUser && auth) {
+                    firebaseUser = auth.currentUser || { uid: 'public-host' };
+                }
+                if (!firebaseUser) return;
                 clearTimeout((this as any).firebaseSyncTimeout);
                 
                 const performSync = async () => {
@@ -604,10 +612,11 @@ const appStore = {
                     (this as any).isSyncingFirebase = true;
                     try {
                         const eventData: any = {
-                            hostId: firebaseUser.uid,
+                            hostId: firebaseUser.uid || 'public-host',
                             activeGameNumber: this.state.activeGameNumber || '',
                             appName: this.state.appConfig.appName || '',
                             bingoTitle: this.state.appConfig.bingoTitle || '',
+                            isReset: false,
                             updatedAt: Date.now(),
                             createdAt: this.state.appConfig.createdAt || Date.now(),
                         };
@@ -4633,9 +4642,31 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                     
                     if (keepCurrentQr && currentEventId) {
                         appStore.state.appConfig.eventId = currentEventId;
-                        appStore.state.appConfig.onlineSyncEnabled = true;
+                    } else if (loadedState.appConfig?.eventId) {
+                        appStore.state.appConfig.eventId = loadedState.appConfig.eventId;
+                    } else if (currentEventId) {
+                        appStore.state.appConfig.eventId = currentEventId;
+                    } else {
+                        appStore.state.appConfig.eventId = safeLocalStorage.getItem('bingo_persistent_event_id') || ('event-' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36));
                     }
                     
+                    // Garante que a sincronização online esteja ativa
+                    appStore.state.appConfig.onlineSyncEnabled = true;
+                    
+                    // Atualiza a variável global eventId e os armazenamentos locais
+                    eventId = appStore.state.appConfig.eventId;
+                    safeLocalStorage.setItem('bingo_persistent_event_id', eventId);
+                    try {
+                        localStorage.setItem('last_bingo_event_id', eventId);
+                    } catch (err) {}
+
+                    // Reseta os caches de hash do Firebase para forçar o reenvio completo dos dados restaurados
+                    (appStore as any)._lastSyncedState = null;
+                    (appStore as any)._lastSyncedGames = {};
+
+                    // Reseta números pendentes ou conferência
+                    appStore.state.pendingNumber = null;
+                    appStore.state.isVerifying = false;
                     
                     // If file has cards, save them to IDB
                     if (loadedState.cardsData) {
@@ -4647,9 +4678,29 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                     }
 
                     renderUIFromState();
+                    updateActiveRoundStats();
+                    applyTheme();
                     applyLabels();
-                    appStore.debouncedSave();
-                    showAlert("Backup carregado com sucesso! O evento foi restaurado.");
+
+                    if (appStore.state.activeGameNumber && appStore.state.gamesData[appStore.state.activeGameNumber]) {
+                        loadRoundState(appStore.state.activeGameNumber);
+                    } else if (Object.keys(appStore.state.gamesData).length > 0) {
+                        const firstRoundKey = Object.keys(appStore.state.gamesData).sort((a, b) => parseInt(a) - parseInt(b))[0];
+                        appStore.state.activeGameNumber = firstRoundKey;
+                        loadRoundState(firstRoundKey);
+                    } else {
+                        loadRoundState(null);
+                    }
+
+                    appStore.debouncedSave(true);
+                    initFirebaseSync();
+                    updateSyncStatusUI();
+
+                    if (typeof (appStore as any).debouncedFirebaseSync === 'function') {
+                        (appStore as any).debouncedFirebaseSync(true);
+                    }
+
+                    showAlert("Backup carregado com sucesso! O painel principal e o painel público foram sincronizados.");
         
                 } catch (error: any) {
                     console.error("Falha ao carregar estado do arquivo:", error);
@@ -8997,13 +9048,41 @@ function showRoundEditModal(gameNumber: string) {
                                         appStore.loadStateFromObject(parsedState);
                                         appStore.state.appConfig.eventId = eventIdToLoad;
                                         appStore.state.appConfig.onlineSyncEnabled = true;
+                                        eventId = eventIdToLoad;
+                                        safeLocalStorage.setItem('bingo_persistent_event_id', eventIdToLoad);
+                                        try {
+                                            localStorage.setItem('last_bingo_event_id', eventIdToLoad);
+                                        } catch (err) {}
+
+                                        (appStore as any)._lastSyncedState = null;
+                                        (appStore as any)._lastSyncedGames = {};
+                                        appStore.state.pendingNumber = null;
+                                        appStore.state.isVerifying = false;
+
                                         renderUIFromState();
                                         updateActiveRoundStats();
                                         applyTheme();
                                         applyLabels();
-                                        appStore.debouncedSave();
+
+                                        if (appStore.state.activeGameNumber && appStore.state.gamesData[appStore.state.activeGameNumber]) {
+                                            loadRoundState(appStore.state.activeGameNumber);
+                                        } else if (Object.keys(appStore.state.gamesData).length > 0) {
+                                            const firstRoundKey = Object.keys(appStore.state.gamesData).sort((a, b) => parseInt(a) - parseInt(b))[0];
+                                            appStore.state.activeGameNumber = firstRoundKey;
+                                            loadRoundState(firstRoundKey);
+                                        } else {
+                                            loadRoundState(null);
+                                        }
+
+                                        appStore.debouncedSave(true);
                                         initFirebaseSync();
-                                        showAlert("Evento carregado com sucesso da nuvem!");
+                                        updateSyncStatusUI();
+
+                                        if (typeof (appStore as any).debouncedFirebaseSync === 'function') {
+                                            (appStore as any).debouncedFirebaseSync(true);
+                                        }
+
+                                        showAlert("Evento carregado com sucesso da nuvem! O painel principal e o painel público foram sincronizados.");
                                         DOMElements.loadOptionsModal?.classList.add('hidden');
                                     } else {
                                         showAlert("O evento encontrado não possui um backup completo.");
