@@ -9,7 +9,7 @@ function getLetterForNumber(number: number): string {
 
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
-import { getFirestore, doc, onSnapshot, collection, addDoc } from 'firebase/firestore';
+import { getFirestore, doc, onSnapshot, getDoc, collection, addDoc } from 'firebase/firestore';
 import QRCode from 'qrcode';
 import { registerSW } from 'virtual:pwa-register';
 import firebaseConfig from './firebase-applet-config.json';
@@ -325,63 +325,224 @@ async function initializeAttendeeApp() {
         }
     }
 
-    onSnapshot(doc(db, "events", targetEventId), (docSnap) => {
-        if (docSnap.exists()) {
-            const eventData = docSnap.data();
-            
-            if (eventData.isReset) {
-                showFatalError('O evento foi encerrado ou resetado pelo organizador. Feche esta página e escaneie o novo QR Code caso um novo evento tenha sido iniciado.');
-                if (waitingScreen) waitingScreen.classList.add('hidden');
-                if (contentContainer) contentContainer.classList.add('hidden');
-                return;
+    const connBadge = document.getElementById('attendee-conn-badge');
+    const connDot = document.getElementById('attendee-conn-dot');
+    const connLabel = document.getElementById('attendee-conn-label');
+
+    let currentConnStatus: 'connected' | 'reconnecting' | 'disconnected' = 'reconnecting';
+    let unsubscribeSnapshot: (() => void) | null = null;
+    let fallbackPollTimer: any = null;
+
+    function updateConnectionIndicator(status: 'connected' | 'reconnecting' | 'disconnected', label?: string) {
+        currentConnStatus = status;
+        if (!connBadge || !connDot || !connLabel) return;
+
+        if (status === 'connected') {
+            connBadge.className = 'px-2.5 py-1 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-full text-[10px] sm:text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer hover:scale-105 active:scale-95';
+            connDot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+            connLabel.textContent = label || 'Ao Vivo';
+            connBadge.title = 'Conectado em tempo real ao sorteio. Toque para atualizar.';
+            if (statusBanner) statusBanner.classList.add('hidden');
+        } else if (status === 'reconnecting') {
+            connBadge.className = 'px-2.5 py-1 bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 rounded-full text-[10px] sm:text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer hover:scale-105 active:scale-95';
+            connDot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-ping';
+            connLabel.textContent = label || 'Reconectando...';
+            connBadge.title = 'Tentando restabelecer sinal. Toque para forçar atualização.';
+        } else {
+            connBadge.className = 'px-2.5 py-1 bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-full text-[10px] sm:text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer hover:scale-105 active:scale-95';
+            connDot.className = 'w-2 h-2 rounded-full bg-rose-500';
+            connLabel.textContent = label || 'Sem Sinal (Atualizar)';
+            connBadge.title = 'Conexão interrompida. Toque para atualizar.';
+        }
+    }
+
+    async function forceCheckLive() {
+        if (!targetEventId) return;
+        try {
+            const snap = await getDoc(doc(db, "events", targetEventId));
+            if (snap.exists()) {
+                handleEventSnapshotData(snap.data());
+                updateConnectionIndicator('connected');
             }
-            
-            if (!eventData.activeGameNumber) {
-                // Populate waiting screen
-                if (eventData.fullStateJSON) {
-                    try {
-                        const state = JSON.parse(eventData.fullStateJSON);
-                        const config = state.appConfig;
-                        (window as any).currentConfig = config;
-                        waitingAppName.textContent = config.bingoTitle || 'Bingo Show';
-                        if (config.customLogoBase64) {
-                            waitingLogo.src = config.customLogoBase64;
-                            waitingLogo.classList.remove('hidden');
-                        } else {
-                            waitingLogo.classList.add('hidden');
-                        }
-                        updateSponsorsDisplay(config);
-                    } catch(e) {}
+        } catch (e: any) {
+            console.warn('[Attendee] Force check error:', e);
+            const isQuota = e?.code === 'resource-exhausted' || (e?.message && e.message.includes('quota'));
+            updateConnectionIndicator(isQuota ? 'reconnecting' : 'disconnected', isQuota ? 'Cota limite' : 'Sem sinal');
+        }
+    }
+
+    connBadge?.addEventListener('click', () => {
+        updateConnectionIndicator('reconnecting', 'Atualizando...');
+        forceCheckLive();
+    });
+
+    function setupSnapshotListener() {
+        if (unsubscribeSnapshot) {
+            try { unsubscribeSnapshot(); } catch (e) {}
+            unsubscribeSnapshot = null;
+        }
+        if (!targetEventId) return;
+
+        updateConnectionIndicator('reconnecting', 'Conectando...');
+
+        try {
+            unsubscribeSnapshot = onSnapshot(
+                doc(db, "events", targetEventId),
+                (docSnap) => {
+                    if (docSnap.exists()) {
+                        updateConnectionIndicator('connected');
+                        handleEventSnapshotData(docSnap.data());
+                    } else {
+                        handleEventSnapshotData(null);
+                        updateConnectionIndicator('connected');
+                    }
+                },
+                (error: any) => {
+                    console.warn("[Attendee] Erro no listener do painel público (fallback ativo):", error?.code, error?.message);
+                    const isQuota = error?.code === 'resource-exhausted' || (error?.message && error.message.includes('quota'));
+                    updateConnectionIndicator('reconnecting', isQuota ? 'Limite de cota atingido' : 'Reconectando...');
+                    startFallbackPolling();
                 }
-                
-                contentContainer.classList.add('hidden');
-                contentContainer.classList.remove('flex');
-                waitingScreen.classList.remove('hidden');
-                waitingScreen.classList.add('flex');
-                statusBanner.classList.add('hidden');
-                
-                lastNumbersStr = '';
-                lastAuctionStr = '';
-                lastRoundStatusStr = '';
-                return;
+            );
+        } catch (err: any) {
+            console.warn("[Attendee] Falha ao registrar onSnapshot:", err);
+            updateConnectionIndicator('disconnected');
+            startFallbackPolling();
+        }
+    }
+
+    function startFallbackPolling() {
+        if (fallbackPollTimer) return;
+        const poll = async () => {
+            if (!targetEventId) return;
+            try {
+                const snap = await getDoc(doc(db, "events", targetEventId));
+                if (snap.exists()) {
+                    handleEventSnapshotData(snap.data());
+                    updateConnectionIndicator('connected');
+                }
+            } catch (err: any) {
+                console.warn('[Attendee] Polling fetch error:', err?.code, err?.message);
+                const isQuota = err?.code === 'resource-exhausted' || (err?.message && err.message.includes('quota'));
+                updateConnectionIndicator(isQuota ? 'reconnecting' : 'disconnected', isQuota ? 'Limite de cota' : 'Sem sinal');
             }
-            
-            waitingScreen.classList.add('hidden');
-            waitingScreen.classList.remove('flex');
-            statusBanner.classList.add('hidden');
-            contentContainer.classList.remove('hidden');
-            contentContainer.classList.add('flex');
-            
+            const jitter = 4000 + Math.random() * 2500;
+            fallbackPollTimer = setTimeout(poll, jitter);
+        };
+        fallbackPollTimer = setTimeout(poll, 1500);
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            console.log('[Attendee] Retornou para primeiro plano, verificando atualizações...');
+            forceCheckLive();
+            if (currentConnStatus !== 'connected') {
+                setupSnapshotListener();
+            }
+        }
+    });
+
+    window.addEventListener('online', () => {
+        console.log('[Attendee] Conexão restabelecida.');
+        setupSnapshotListener();
+        forceCheckLive();
+    });
+
+    function handleEventSnapshotData(eventData: any) {
+        if (!eventData) {
+            waitingAppName.textContent = 'Bingo Show';
+            waitingTitle.textContent = 'Aguardando Início';
+            waitingMessage.textContent = 'Conectado à sala! Aguardando o organizador iniciar a primeira rodada...';
+            contentContainer.classList.add('hidden');
+            contentContainer.classList.remove('flex');
+            waitingScreen.classList.remove('hidden');
+            waitingScreen.classList.add('flex');
+            return;
+        }
+
+        if (eventData.isReset) {
+            showFatalError('O evento foi encerrado ou resetado pelo organizador. Feche esta página e escaneie o novo QR Code caso um novo evento tenha sido iniciado.');
+            if (waitingScreen) waitingScreen.classList.add('hidden');
+            if (contentContainer) contentContainer.classList.add('hidden');
+            return;
+        }
+        
+        if (!eventData.activeGameNumber) {
+            // Populate waiting screen
             if (eventData.fullStateJSON) {
                 try {
                     const state = JSON.parse(eventData.fullStateJSON);
-                    const activeKey = eventData.activeGameNumber ? String(eventData.activeGameNumber) : '';
-                    const game = state.gamesData ? (state.gamesData[activeKey] || state.gamesData[eventData.activeGameNumber]) : null;
-                    const config = state.appConfig || {};
+                    const config = state.appConfig;
                     (window as any).currentConfig = config;
-                    
-                    (window as any).currentActiveGame = eventData.activeGameNumber;
-                    (window as any).currentBingoTitle = config.bingoTitle;
+                    waitingAppName.textContent = config.bingoTitle || 'Bingo Show';
+                    if (config.customLogoBase64) {
+                        waitingLogo.src = config.customLogoBase64;
+                        waitingLogo.classList.remove('hidden');
+                    } else {
+                        waitingLogo.classList.add('hidden');
+                    }
+                    updateSponsorsDisplay(config);
+                } catch(e) {}
+            }
+            
+            contentContainer.classList.add('hidden');
+            contentContainer.classList.remove('flex');
+            waitingScreen.classList.remove('hidden');
+            waitingScreen.classList.add('flex');
+            statusBanner.classList.add('hidden');
+            
+            lastNumbersStr = '';
+            lastAuctionStr = '';
+            lastRoundStatusStr = '';
+            return;
+        }
+        
+        waitingScreen.classList.add('hidden');
+        waitingScreen.classList.remove('flex');
+        statusBanner.classList.add('hidden');
+        contentContainer.classList.remove('hidden');
+        contentContainer.classList.add('flex');
+        
+        // Cache parsed full state to avoid JSON.parse overhead on every ball
+        if (eventData.fullStateJSON) {
+            if ((window as any)._lastFullStateRaw !== eventData.fullStateJSON) {
+                (window as any)._lastFullStateRaw = eventData.fullStateJSON;
+                try {
+                    (window as any)._cachedState = JSON.parse(eventData.fullStateJSON);
+                } catch(e) {}
+            }
+        }
+        
+        const state = (window as any)._cachedState || {};
+        
+        // Merge lightweight liveRound if present
+        if (eventData.liveRound) {
+            const live = eventData.liveRound;
+            if (!state.gamesData) state.gamesData = {};
+            const activeKey = live.activeGameNumber ? String(live.activeGameNumber) : (eventData.activeGameNumber ? String(eventData.activeGameNumber) : '');
+            if (activeKey) {
+                if (!state.gamesData[activeKey]) state.gamesData[activeKey] = {};
+                state.gamesData[activeKey].calledNumbers = live.calledNumbers || [];
+                state.gamesData[activeKey].winners = live.winners || [];
+                state.gamesData[activeKey].prizes = live.prizes || {};
+                state.gamesData[activeKey].color = live.color || '#38bdf8';
+            }
+            state.pendingNumber = live.pendingNumber;
+            state.auction = live.auction;
+            state.latestBingoTimestamp = live.latestBingoTimestamp;
+            state.latestRoundTimestamp = live.latestRoundTimestamp;
+            state.latestUndoTimestamp = live.latestUndoTimestamp;
+        }
+
+        if (eventData.fullStateJSON || eventData.liveRound) {
+            try {
+                const activeKey = eventData.activeGameNumber ? String(eventData.activeGameNumber) : '';
+                const game = state.gamesData ? (state.gamesData[activeKey] || state.gamesData[eventData.activeGameNumber]) : null;
+                const config = state.appConfig || {};
+                (window as any).currentConfig = config;
+                
+                (window as any).currentActiveGame = eventData.activeGameNumber;
+                (window as any).currentBingoTitle = config.bingoTitle;
 
                     const pixConfigStr = JSON.stringify({ key: config.pixKey || '', qrUrl: config.pixQrCodeUrl || '', title: config.pixTitle || '' });
                     if ((window as any).lastPixConfigStr !== pixConfigStr) {
@@ -949,23 +1110,10 @@ async function initializeAttendeeApp() {
                     console.error("Erro ao analisar estado do painel", e);
                 }
             }
-        } else {
-            // Se o documento ainda não foi gravado na nuvem pelo host, exibe a tela de espera com mensagem informativa em vez de erro fatal
-            waitingAppName.textContent = 'Bingo Show';
-            waitingTitle.textContent = 'Aguardando Início';
-            waitingMessage.textContent = 'Conectado à sala! Aguardando o organizador iniciar a primeira rodada...';
-            contentContainer.classList.add('hidden');
-            contentContainer.classList.remove('flex');
-            waitingScreen.classList.remove('hidden');
-            waitingScreen.classList.add('flex');
         }
-    }, (error) => {
-        console.warn("Aviso no listener do painel público (reconexão automática ativa):", error);
-        if (statusBanner) {
-            statusBanner.textContent = '🔄 Reconectando ao painel em tempo real...';
-            statusBanner.classList.remove('hidden');
-        }
-    });
+
+    // Inicializa a escuta em tempo real do evento com reconexao automatica
+    setupSnapshotListener();
 }
 
 // Offline / Online detection

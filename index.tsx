@@ -619,6 +619,22 @@ const appStore = {
                             isReset: false,
                             updatedAt: Date.now(),
                             createdAt: this.state.appConfig.createdAt || Date.now(),
+                            liveRound: {
+                                activeGameNumber: this.state.activeGameNumber || '',
+                                calledNumbers: this.state.activeGameNumber && this.state.gamesData[this.state.activeGameNumber] ? (this.state.gamesData[this.state.activeGameNumber].calledNumbers || []) : [],
+                                pendingNumber: this.state.pendingNumber || null,
+                                lastNumber: this.state.activeGameNumber && this.state.gamesData[this.state.activeGameNumber]?.calledNumbers?.length 
+                                    ? this.state.gamesData[this.state.activeGameNumber].calledNumbers[this.state.gamesData[this.state.activeGameNumber].calledNumbers.length - 1] 
+                                    : null,
+                                winners: this.state.activeGameNumber && this.state.gamesData[this.state.activeGameNumber] ? (this.state.gamesData[this.state.activeGameNumber].winners || []) : [],
+                                prizes: this.state.activeGameNumber && this.state.gamesData[this.state.activeGameNumber] ? (this.state.gamesData[this.state.activeGameNumber].prizes || {}) : {},
+                                color: this.state.activeGameNumber && this.state.gamesData[this.state.activeGameNumber] ? (this.state.gamesData[this.state.activeGameNumber].color || '#38bdf8') : '#38bdf8',
+                                auction: this.state.auction || null,
+                                updatedAt: Date.now(),
+                                latestBingoTimestamp: this.state.latestBingoTimestamp || 0,
+                                latestRoundTimestamp: this.state.latestRoundTimestamp || 0,
+                                latestUndoTimestamp: this.state.latestUndoTimestamp || 0,
+                            },
                         };
                         
                         const stateToStore = JSON.parse(JSON.stringify(this.getAppStateForSaving(false)));

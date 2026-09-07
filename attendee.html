@@ -111,23 +111,31 @@
         
         
         
-        <button id="top-donate-btn-attendee" class="absolute top-2 left-2 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-full shadow-lg border border-emerald-400/40 flex items-center gap-1.5 z-50 transition-all cursor-pointer hover:scale-105" title="Fazer Doação / Apoiar Instituição">
-            <span>❤️</span>
-            <span class="font-extrabold">Doar / Apoiar</span>
-        </button>
-
-        <button id="attendee-logout-btn" class="absolute top-2 right-22 p-2 text-red-500 hover:text-red-600 transition-colors h-8 w-8 flex items-center justify-center rounded-full bg-brand-card shadow border border-brand-border z-50 hidden" title="Desconectar Conta">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-        </button>
-
-        <button id="show-winners-attendee-btn" class="absolute top-2 right-12 p-2 text-amber-500 hover:text-amber-600 transition-colors h-8 w-8 flex items-center justify-center rounded-full bg-brand-card shadow border border-brand-border z-50" title="Ver Vencedores">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
-        </button>
-
-        <button id="theme-toggle-attendee-btn" class="absolute top-2 right-2 p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors h-8 w-8 flex items-center justify-center rounded-full bg-brand-card shadow border border-brand-border z-50" title="Alternar Modo Claro/Escuro">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-        </button>
+        <!-- Header Toolbar -->
+        <div class="w-full flex items-center justify-between gap-2 z-50 mb-1">
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                <button id="top-donate-btn-attendee" class="px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-[11px] sm:text-xs rounded-full shadow-md border border-emerald-400/40 flex items-center gap-1 transition-all cursor-pointer hover:scale-105 active:scale-95" title="Fazer Doação / Apoiar Instituição">
+                    <span>❤️</span>
+                    <span class="font-extrabold">Doar</span>
+                </button>
+                <button id="attendee-conn-badge" class="px-2.5 py-1 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-full text-[10px] sm:text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer hover:scale-105 active:scale-95" title="Status da Conexão. Toque para atualizar">
+                    <span id="attendee-conn-dot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="attendee-conn-label">Ao Vivo</span>
+                </button>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button id="attendee-logout-btn" class="p-2 text-red-500 hover:text-red-600 transition-colors h-8 w-8 flex items-center justify-center rounded-full bg-brand-card shadow border border-brand-border hidden" title="Desconectar Conta">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                </button>
+                <button id="show-winners-attendee-btn" class="p-2 text-amber-500 hover:text-amber-600 transition-colors h-8 w-8 flex items-center justify-center rounded-full bg-brand-card shadow border border-brand-border" title="Ver Vencedores">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
+                </button>
+                <button id="theme-toggle-attendee-btn" class="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors h-8 w-8 flex items-center justify-center rounded-full bg-brand-card shadow border border-brand-border" title="Alternar Modo Claro/Escuro">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                </button>
+            </div>
+        </div>
 
         <div id="attendee-content" class="hidden flex-col gap-3 sm:gap-4 w-full animate-fade-in">
             
