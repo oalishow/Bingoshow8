@@ -18,3 +18,9 @@ View your app in AI Studio: https://ai.studio/apps/df27f58b-8b3b-470b-a175-122e0
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Teste de fumaça
+
+`npm run test:smoke` compila o app e percorre o roteiro de um evento no painel do apresentador (escolher rodada, sortear, cancelar, conferir bingo, sortear brinde, intervalo, configurações, gerar cartelas, salvar e carregar backup). No fim compara o estado salvo com `tests/smoke/baseline.json`.
+
+Se uma mudança alterar o resultado de propósito, regrave a referência com `npm run test:smoke -- --update` e revise a diferença no commit.
