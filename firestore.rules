@@ -1,8 +1,102 @@
 rules_version = '2';
+
+// Regras de segurança do Bingo Show.
+//
+// Princípios:
+//  - Qualquer pessoa (inclusive sem login) pode LER um evento, suas rodadas e
+//    uma cartela pelo ID. É disso que o Painel do Público e a cartela digital
+//    precisam para acompanhar o sorteio ao vivo.
+//  - Só o organizador logado (Google/Facebook) que é dono do evento pode
+//    ESCREVER nele. O dono é quem está em `hostId`.
+//  - Listar coleções inteiras (enumerar eventos ou cartelas) é proibido.
+//  - Os pedidos de "BINGO!" (bingoClaims) podem ser criados por qualquer
+//    pessoa, mas só o dono do evento consegue lê-los, porque contêm nome e CPF.
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isUid(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function eventDoc(eventId) {
+      return get(/databases/$(database)/documents/events/$(eventId));
+    }
+
+    function isEventHost(eventId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/events/$(eventId))
+        && eventDoc(eventId).data.hostId == request.auth.uid;
+    }
+
+    // ---------------------------------------------------------------- events
+    match /events/{eventId} {
+      allow get: if true;
+      allow list: if false;
+
+      allow create: if signedIn()
+        && request.resource.data.hostId == request.auth.uid;
+
+      // Eventos antigos gravados sem login (hostId "public-host") ficam
+      // somente leitura: o app cria um evento novo para o organizador logado.
+      allow update: if isUid(resource.data.hostId)
+        && request.resource.data.hostId == request.auth.uid;
+
+      allow delete: if isUid(resource.data.hostId);
+
+      // ------------------------------------------------------------ rounds
+      match /games/{gameId} {
+        allow get: if true;
+        allow list: if isEventHost(eventId);
+        allow create, update, delete: if isEventHost(eventId);
+
+        // ------------------------------------------------- bingo claims
+        match /bingoClaims/{claimId} {
+          allow read: if isEventHost(eventId);
+          allow delete: if isEventHost(eventId);
+          allow update: if false;
+
+          allow create: if exists(/databases/$(database)/documents/events/$(eventId))
+            && request.resource.data.keys().hasOnly(['uuid', 'series', 'name', 'cpf', 'timestamp'])
+            && request.resource.data.keys().hasAll(['uuid', 'series', 'timestamp'])
+            && request.resource.data.uuid is string
+            && request.resource.data.uuid.size() <= 128
+            && request.resource.data.series is int
+            && request.resource.data.timestamp is int
+            && (!('name' in request.resource.data)
+                || (request.resource.data.name is string && request.resource.data.name.size() <= 120))
+            && (!('cpf' in request.resource.data)
+                || (request.resource.data.cpf is string && request.resource.data.cpf.size() <= 20));
+        }
+      }
+    }
+
+    // ----------------------------------------------------------------- cards
+    // Cartelas ficam na raiz (cards/{uuid}) e são abertas pelo QR Code.
+    match /cards/{cardId} {
+      allow get: if true;
+      allow list: if false;
+
+      allow create: if signedIn()
+        && request.resource.data.hostId == request.auth.uid;
+
+      // Cartelas antigas, enviadas sem login (hostId "public-host"), podem ser
+      // reenviadas pelo organizador logado, que passa a ser o dono delas.
+      // Isso mantém válidos os QR Codes já impressos.
+      allow update: if signedIn()
+        && request.resource.data.hostId == request.auth.uid
+        && (resource.data.hostId == request.auth.uid
+            || resource.data.hostId == 'public-host');
+
+      allow delete: if isUid(resource.data.hostId);
+    }
+
+    // Qualquer outro caminho fica fechado.
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

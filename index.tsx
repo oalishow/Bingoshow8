@@ -595,10 +595,9 @@ const appStore = {
                     eventId = this.state.appConfig.eventId || safeLocalStorage.getItem('bingo_persistent_event_id') || '';
                 }
                 if (!eventId) return;
-                if (!firebaseUser && auth) {
-                    firebaseUser = auth.currentUser || { uid: 'public-host' };
-                }
-                if (!firebaseUser) return;
+                // As regras do Firestore só aceitam gravações do organizador logado.
+                if (!auth || !auth.currentUser) return;
+                firebaseUser = auth.currentUser;
                 clearTimeout((this as any).firebaseSyncTimeout);
                 
                 const performSync = async () => {
@@ -612,7 +611,7 @@ const appStore = {
                     (this as any).isSyncingFirebase = true;
                     try {
                         const eventData: any = {
-                            hostId: firebaseUser.uid || 'public-host',
+                            hostId: firebaseUser.uid,
                             activeGameNumber: this.state.activeGameNumber || '',
                             appName: this.state.appConfig.appName || '',
                             bingoTitle: this.state.appConfig.bingoTitle || '',
@@ -696,7 +695,21 @@ const appStore = {
                         });
                         
                         if (mainStateChanged) {
-                            await setDoc(doc(db, "events", eventId), eventData, { merge: true });
+                            try {
+                                await setDoc(doc(db, "events", eventId), eventData, { merge: true });
+                            } catch (err: any) {
+                                if (err?.code !== 'permission-denied') throw err;
+                                // O evento pertence a outra conta (ou foi criado antes do login
+                                // ser obrigatório). Cria um evento novo para este organizador.
+                                const oldEventId = eventId;
+                                eventId = 'event-' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+                                this.state.appConfig.eventId = eventId;
+                                safeLocalStorage.setItem('bingo_persistent_event_id', eventId);
+                                (this as any)._lastSyncedGames = {};
+                                await setDoc(doc(db, "events", eventId), eventData, { merge: true });
+                                this.saveStateToLocalStorage();
+                                window.alert(`Este evento (${oldEventId}) pertence a outra conta ou foi criado sem login, então foi criado um novo ID de evento para você: ${eventId}.\n\nGere um novo QR Code do Painel do Público e use "Forçar Envio de Cartelas para a Nuvem" para atualizar as cartelas digitais.`);
+                            }
                         }
 
                         for (let i = 0; i < gamesToSync.length; i += 100) {
@@ -3970,7 +3983,12 @@ function showSettingsModal() {
     passwordInput.addEventListener('change', () => appStore.debouncedSave());
 
     document.getElementById('force-sync-cards-btn')?.addEventListener('click', async () => {
-        if (!eventId || !firebaseUser) return;
+        if (!eventId) return;
+        if (!auth.currentUser) {
+            showAlert("Faça login com Google ou Facebook para enviar as cartelas para a nuvem.");
+            return;
+        }
+        firebaseUser = auth.currentUser;
         const btn = document.getElementById('force-sync-cards-btn') as HTMLButtonElement;
         const originalText = btn.textContent;
         btn.textContent = "Sincronizando...";
@@ -7584,7 +7602,8 @@ function showRoundEditModal(gameNumber: string) {
             }
 
             // Sync to firebase in background if needed
-            if (appStore.state.appConfig.onlineSyncEnabled && eventId && firebaseUser) {
+            if (appStore.state.appConfig.onlineSyncEnabled && eventId && auth?.currentUser) {
+                firebaseUser = auth.currentUser;
                 const syncToFirebase = async () => {
                     try {
                         let currentBatch = writeBatch(db);
@@ -9581,6 +9600,22 @@ function showRoundEditModal(gameNumber: string) {
             const statusEl = document.getElementById('online-sync-status');
             const forceSyncBtn = document.getElementById('force-sync-cards-btn');
             const globalStatusEl = document.getElementById('global-connection-status');
+
+            if (appStore.state.appConfig.onlineSyncEnabled && !auth?.currentUser) {
+                if (statusEl) {
+                    statusEl.classList.remove('hidden');
+                    statusEl.className = 'mt-2 text-sm text-center p-2 rounded max-w-sm ml-auto mr-auto break-all bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-200';
+                    statusEl.innerHTML = `🔒 Faça login com Google ou Facebook para sincronizar o sorteio com o público.`;
+                }
+                if (forceSyncBtn) forceSyncBtn.classList.add('hidden');
+                if (globalStatusEl) {
+                    globalStatusEl.classList.remove('hidden');
+                    globalStatusEl.className = 'flex items-center justify-center p-2 rounded-full shadow-lg bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-sm font-bold font-mono text-center px-6 border-2 border-yellow-400 dark:border-yellow-600';
+                    globalStatusEl.innerHTML = `🔒 Faça login para o Modo Online`;
+                    globalStatusEl.onclick = null;
+                }
+                return;
+            }
             
             if (statusEl) {
                 statusEl.classList.remove('hidden');
@@ -9646,7 +9681,7 @@ function showRoundEditModal(gameNumber: string) {
             }
 
             onAuthStateChanged(auth, async (user) => {
-                firebaseUser = user || { uid: 'public-host' };
+                firebaseUser = user;
                 updateSyncStatusUI();
                 
                 // Trigger a sync

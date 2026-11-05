@@ -45,8 +45,15 @@ Outros comandos:
 | `npm run build`   | Gera a versão de produção na pasta `dist/`             |
 | `npm run preview` | Serve a pasta `dist/` na porta 3000 para conferência   |
 | `npm run lint`    | Verifica os tipos do TypeScript (`tsc --noEmit`)       |
+| `npm run test:smoke` | Roda o teste de fumaça do painel do apresentador    |
 
 O projeto **não precisa de nenhuma chave de API do Gemini** nem de arquivo `.env` para funcionar.
+
+## Teste de fumaça
+
+`npm run test:smoke` compila o app e percorre o roteiro de um evento no painel do apresentador (escolher rodada, sortear, cancelar, conferir bingo, sortear brinde, intervalo, configurações, gerar cartelas, salvar e carregar backup). No fim compara o estado salvo com `tests/smoke/baseline.json`.
+
+Se uma mudança alterar o resultado de propósito, regrave a referência com `npm run test:smoke -- --update` e revise a diferença no commit. O mesmo teste roda automaticamente em todo pull request (`.github/workflows/checks.yml`).
 
 ## Configuração do Firebase
 
@@ -72,7 +79,12 @@ As credenciais do Firebase ficam no arquivo [`firebase-applet-config.json`](fire
 
 6. Publique as regras de segurança do Firestore a partir de [`firestore.rules`](firestore.rules) (pelo console ou com `firebase deploy --only firestore:rules`).
 
-> **Atenção:** as regras atuais (`allow read, write: if true`) deixam o banco aberto para leitura e escrita por qualquer pessoa. Servem para testes, mas devem ser restringidas antes de um uso público.
+As regras funcionam assim:
+
+- qualquer pessoa, mesmo sem login, pode **ler** um evento, suas rodadas e uma cartela pelo ID, que é o que o Painel do Público e a cartela digital precisam;
+- só o organizador **logado com Google ou Facebook** que é dono do evento (`hostId`) pode **gravar** nele, por isso a sincronização online exige login no painel do apresentador;
+- os pedidos de "BINGO!" podem ser enviados por qualquer pessoa, mas só o dono do evento consegue lê-los, porque contêm nome e CPF;
+- listar coleções inteiras e qualquer outro caminho do banco ficam bloqueados.
 
 ## Publicação
 
@@ -89,4 +101,5 @@ Rode `npm run build` e publique a pasta `dist/` em qualquer hospedagem de sites 
 | `firebase-applet-config.json` | Credenciais do Firebase                          |
 | `firestore.rules`             | Regras de segurança do Firestore                 |
 | `vite.config.ts`              | Configuração do Vite e do PWA                    |
+| `tests/smoke/`                | Teste de fumaça e estado de referência           |
 | `public/`                     | Ícones e imagens do PWA                          |
