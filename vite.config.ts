@@ -108,13 +108,13 @@ export default defineConfig(({ mode }) => {
               }
             ]
           },
-          includeAssets: ['favicon.ico', 'favicon.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-512x512-maskable.png', 'icon.svg'],
+          includeAssets: ['favicon.ico', 'favicon.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-512x512-maskable.png', 'pwa-192x192-maskable.png', 'icon.svg'],
           manifest: {
             name: 'PrêmioShow',
             short_name: 'PrêmioShow',
             description: 'Show de prêmios para paróquias e comunidades',
-            theme_color: '#4f46e5',
-            background_color: '#1e1b4b',
+            theme_color: '#1B1A4A',
+            background_color: '#14133A',
             display: 'standalone',
             start_url: '/',
             icons: [
@@ -125,7 +125,7 @@ export default defineConfig(({ mode }) => {
                 purpose: 'any'
               },
               {
-                src: 'pwa-192x192.png',
+                src: 'pwa-192x192-maskable.png',
                 sizes: '192x192',
                 type: 'image/png',
                 purpose: 'maskable'
@@ -137,7 +137,7 @@ export default defineConfig(({ mode }) => {
                 purpose: 'any'
               },
               {
-                src: 'pwa-512x512.png',
+                src: 'pwa-512x512-maskable.png',
                 sizes: '512x512',
                 type: 'image/png',
                 purpose: 'maskable'

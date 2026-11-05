@@ -1,52 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-    <defs>
-        <!-- Background Gradient -->
-        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#1e1b4b"/>
-            <stop offset="50%" stop-color="#312e81"/>
-            <stop offset="100%" stop-color="#4338ca"/>
-        </linearGradient>
-        
-        <!-- Golden Text Gradient -->
-        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#fef08a"/>
-            <stop offset="40%" stop-color="#fbbf24"/>
-            <stop offset="60%" stop-color="#d97706"/>
-            <stop offset="100%" stop-color="#b45309"/>
-        </linearGradient>
-
-        <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#ef4444"/>
-            <stop offset="100%" stop-color="#991b1b"/>
-        </linearGradient>
-
-        <!-- Drop Shadows -->
-        <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="12" stdDeviation="10" flood-opacity="0.8" flood-color="#000"/>
-        </filter>
-        <filter id="textGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="8" stdDeviation="6" flood-opacity="0.9" flood-color="#000"/>
-        </filter>
-    </defs>
-
-    <!-- Background Base (Full for maskable) -->
-    <rect width="512" height="512" fill="url(#bgGrad)"/>
-    
-    <!-- Central Group (Scaled down for safe area) -->
-    <g transform="translate(51, 51) scale(0.8)">
-        <!-- Center Bingo Ball -->
-        <circle cx="256" cy="220" r="130" fill="url(#redGrad)" filter="url(#dropShadow)"/>
-        
-        <!-- White Circle center -->
-        <circle cx="256" cy="220" r="80" fill="#ffffff" filter="url(#dropShadow)"/>
-        
-        <!-- Big Number or B -->
-        <text x="256" y="270" font-family="'Impact', sans-serif" font-size="140" font-weight="900" fill="#b91c1c" text-anchor="middle" font-style="italic">B</text>
-
-        <!-- BINGO Text -->
-        <text x="256" y="440" font-family="'Arial Black', Impact, sans-serif" font-size="85" font-weight="900" font-style="italic" fill="url(#goldGrad)" text-anchor="middle" filter="url(#textGlow)" stroke="#78350f" stroke-width="4" letter-spacing="4">BINGO</text>
-        
-        <!-- SHOW Text -->
-        <text x="256" y="490" font-family="'Arial Black', Impact, sans-serif" font-size="45" font-weight="900" font-style="italic" fill="#ffffff" text-anchor="middle" filter="url(#textGlow)" letter-spacing="12">SHOW</text>
-    </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#25236A"/><stop offset="1" stop-color="#14133A"/></linearGradient>
+<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD54A"/><stop offset=".6" stop-color="#F5B301"/><stop offset="1" stop-color="#C98A0C"/></linearGradient>
+<linearGradient id="red" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EA4452"/><stop offset="1" stop-color="#A8172A"/></linearGradient>
+<radialGradient id="rayg" gradientUnits="userSpaceOnUse" cx="256" cy="266" r="300"><stop offset="0" stop-color="#FFB703" stop-opacity=".45"/><stop offset="1" stop-color="#FFB703" stop-opacity="0"/></radialGradient><clipPath id="rrc"><rect width="512" height="512" rx="112"/></clipPath><linearGradient id="redbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E23A4A"/><stop offset="1" stop-color="#8E1222"/></linearGradient></defs><rect width="512" height="512" fill="url(#bg)"/><g clip-path="url(#rrc)"><path d="M256,266 L614,228 L614,304 Z" fill="url(#rayg)"/><path d="M256,266 L585,412 L547,478 Z" fill="url(#rayg)"/><path d="M256,266 L468,557 L402,595 Z" fill="url(#rayg)"/><path d="M256,266 L294,624 L218,624 Z" fill="url(#rayg)"/><path d="M256,266 L110,595 L44,557 Z" fill="url(#rayg)"/><path d="M256,266 L-35,478 L-73,412 Z" fill="url(#rayg)"/><path d="M256,266 L-102,304 L-102,228 Z" fill="url(#rayg)"/><path d="M256,266 L-73,120 L-35,54 Z" fill="url(#rayg)"/><path d="M256,266 L44,-25 L110,-63 Z" fill="url(#rayg)"/><path d="M256,266 L218,-92 L294,-92 Z" fill="url(#rayg)"/><path d="M256,266 L402,-63 L468,-25 Z" fill="url(#rayg)"/><path d="M256,266 L547,54 L585,120 Z" fill="url(#rayg)"/></g><rect x="87" y="114" width="18" height="8" rx="2" fill="#F5B301" transform="rotate(-20 96 118)"/><rect x="141" y="80" width="18" height="8" rx="2" fill="#FFF8EC" transform="rotate(35 150 84)"/><circle cx="404" cy="96" r="7" fill="#D62839"/><rect x="431" y="166" width="18" height="8" rx="2" fill="#F5B301" transform="rotate(15 440 170)"/><rect x="61" y="246" width="18" height="8" rx="2" fill="#FFF8EC" transform="rotate(60 70 250)"/><circle cx="452" cy="330" r="7" fill="#38BDF8"/><rect x="83" y="398" width="18" height="8" rx="2" fill="#F5B301" transform="rotate(30 92 402)"/><rect x="151" y="442" width="18" height="8" rx="2" fill="#FFF8EC" transform="rotate(-50 160 446)"/><circle cx="372" cy="448" r="7" fill="#D62839"/><rect x="421" y="416" width="18" height="8" rx="2" fill="#F5B301" transform="rotate(70 430 420)"/><rect x="241" y="66" width="18" height="8" rx="2" fill="#FFF8EC" transform="rotate(10 250 70)"/><circle cx="330" cy="64" r="7" fill="#38BDF8"/><g transform="translate(256 270) scale(0.96) translate(-256 -256)"><g transform="rotate(-24 256 256) translate(-28 6)"><path d="M104,150 H408 V214 A30,30 0 0 0 408,298 V362 H104 V298 A30,30 0 0 0 104,214 Z" fill="#38BDF8"/></g><g transform="rotate(8 256 256) translate(18 -34)"><path d="M104,150 H408 V214 A30,30 0 0 0 408,298 V362 H104 V298 A30,30 0 0 0 104,214 Z" fill="url(#red)"/></g><g transform="rotate(-10 256 256) translate(-6 26)"><path d="M104,150 H408 V214 A30,30 0 0 0 408,298 V362 H104 V298 A30,30 0 0 0 104,214 Z" fill="url(#gold)"/><line x1="300" y1="164" x2="300" y2="348" stroke="#14133A" stroke-width="6" stroke-dasharray="10 10" opacity=".5"/>
+<path d="M170,330 V182 H236 A44,44 0 0 1 236,270 H202 V330 Z M202,212 V240 H234 A14,14 0 0 0 234,212 Z" fill="#1B1A4A" fill-rule="evenodd"/><path d="M348.0,234.0 L353.3,248.7 L368.9,249.2 L356.6,258.8 L360.9,273.8 L348.0,265.0 L335.1,273.8 L339.4,258.8 L327.1,249.2 L342.7,248.7 Z" fill="#D62839"/></g></g><path d="M40,450 C80,414 30,386 68,356 C106,328 60,302 92,276" fill="none" stroke="#F5B301" stroke-width="8" stroke-linecap="round"/><path d="M472,450 C434,414 482,386 444,356 C408,328 458,302 424,276" fill="none" stroke="#D62839" stroke-width="8" stroke-linecap="round"/><path d="M110,96 C140,64 172,106 202,72 C224,48 248,74 264,56" fill="none" stroke="#38BDF8" stroke-width="8" stroke-linecap="round"/><path d="M430,90 Q430,118 458,118 Q430,118 430,146 Q430,118 402,118 Q430,118 430,90 Z" fill="#FFF8EC"/><path d="M396,70 Q396,82 408,82 Q396,82 396,94 Q396,82 384,82 Q396,82 396,70 Z" fill="#FFD54A"/><path d="M258,454 Q258,470 274,470 Q258,470 258,486 Q258,470 242,470 Q258,470 258,454 Z" fill="#FFD54A"/><path d="M76,82 Q76,96 90,96 Q76,96 76,110 Q76,96 62,96 Q76,96 76,82 Z" fill="#FFF8EC"/></svg>
