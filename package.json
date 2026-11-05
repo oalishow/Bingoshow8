@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --port 3000 --host 0.0.0.0",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:smoke": "vite build && node tests/smoke/run.mjs"
   },
   "dependencies": {
     "firebase": "^12.12.1",
