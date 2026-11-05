@@ -7,7 +7,9 @@ import jsQR from 'jsqr';
 import { registerSW } from 'virtual:pwa-register';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, FacebookAuthProvider, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore, doc, setDoc, onSnapshot, collection, getDoc, getDocs, writeBatch } from 'firebase/firestore';
+import { getFirestore, doc, onSnapshot, collection, getDoc, getDocs } from 'firebase/firestore';
+// setDoc e writeBatch vêm do Modo Ensaio, que bloqueia as gravações no Firebase durante o ensaio.
+import { setDoc, writeBatch, isRehearsal, storageKey, activeDbName, setupRehearsalUI } from './src/features/rehearsal';
 import firebaseConfig from './firebase-applet-config.json';
 import { sounds } from './audio';
 import { DEFAULT_LOGO, isLegacyDefaultLogo, migrateLogo } from './src/core/logo';
@@ -34,26 +36,26 @@ const memoryLocalStorage: Record<string, string> = {};
 const safeLocalStorage = {
     getItem(key: string): string | null {
         try {
-            return window.localStorage.getItem(key);
+            return window.localStorage.getItem(storageKey(key));
         } catch (e) {
             console.warn(`[Storage] localStorage.getItem indisponível para a chave '${key}'. Usando memória temporária.`, e);
-            return memoryLocalStorage[key] || null;
+            return memoryLocalStorage[storageKey(key)] || null;
         }
     },
     setItem(key: string, value: string): void {
         try {
-            window.localStorage.setItem(key, value);
+            window.localStorage.setItem(storageKey(key), value);
         } catch (e) {
             console.warn(`[Storage] localStorage.setItem indisponível para a chave '${key}'. Usando memória temporária.`, e);
-            memoryLocalStorage[key] = value;
+            memoryLocalStorage[storageKey(key)] = value;
         }
     },
     removeItem(key: string): void {
         try {
-            window.localStorage.removeItem(key);
+            window.localStorage.removeItem(storageKey(key));
         } catch (e) {
             console.warn(`[Storage] localStorage.removeItem indisponível para a chave '${key}'. Usando memória temporária.`, e);
-            delete memoryLocalStorage[key];
+            delete memoryLocalStorage[storageKey(key)];
         }
     }
 };
@@ -4295,7 +4297,7 @@ function applyAuctionZoom(scale: number) {
         }
         
         // --- Funções de Salvamento Resilientes com Fallback ---
-        const DB_NAME = 'BingoShowDB';
+        const DB_NAME = activeDbName; // 'BingoShowDB' (ou a cópia do Modo Ensaio)
         const STORE_NAME_IMAGES = 'sponsorImages';
         const STORE_NAME_CARDS = 'cards';
 
@@ -4620,7 +4622,7 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                     session.eventId = appStore.state.appConfig.eventId;
                     safeLocalStorage.setItem('bingo_persistent_event_id', session.eventId);
                     try {
-                        localStorage.setItem('last_bingo_event_id', session.eventId);
+                        safeLocalStorage.setItem('last_bingo_event_id', session.eventId);
                     } catch (err) {}
 
                     // Reseta os caches de hash do Firebase para forçar o reenvio completo dos dados restaurados
@@ -5714,7 +5716,7 @@ Deseja MANTER o seu QR Code/Link atual para o público?
             updateLastPrizesDisplay();
             
             // Listen to Bingo Claims from online players
-            if (appStore.state.appConfig.onlineSyncEnabled && session.eventId && gameNumber) {
+            if (!isRehearsal && appStore.state.appConfig.onlineSyncEnabled && session.eventId && gameNumber) {
                const claimsRef = collection(session.db, `events/${session.eventId}/games/${gameNumber}/bingoClaims`);
                let initialLoad = true;
                (window as any).masterBingoClaimsUnsub = onSnapshot(claimsRef, (snapshot) => {
@@ -9010,6 +9012,7 @@ function showRoundEditModal(gameNumber: string) {
                     });
                 }
                 document.getElementById('save-to-file-btn')?.addEventListener('click', saveStateToFile);
+                setupRehearsalUI();
                 
                 document.getElementById('show-load-options-btn')?.addEventListener('click', () => {
                     if (DOMElements.loadOptionsModal) {
@@ -9072,7 +9075,7 @@ function showRoundEditModal(gameNumber: string) {
                                         session.eventId = eventIdToLoad;
                                         safeLocalStorage.setItem('bingo_persistent_event_id', eventIdToLoad);
                                         try {
-                                            localStorage.setItem('last_bingo_event_id', eventIdToLoad);
+                                            safeLocalStorage.setItem('last_bingo_event_id', eventIdToLoad);
                                         } catch (err) {}
 
                                         (appStore as any)._lastSyncedState = null;

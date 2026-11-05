@@ -1,5 +1,11 @@
 // Histórico de versões do app (valor inicial de appStore.state.versionHistory).
-export const versionHistory = `**v8.0 (Atual)**
+export const versionHistory = `**v8.1 (Atual)**
+- **MODO ENSAIO:** Novo botão "🎭 Modo Ensaio" no menu lateral. Ele cria uma cópia do evento atual para a equipe treinar à vontade: nada do que é feito no ensaio altera o evento real nem é enviado ao Painel do Público. Uma faixa roxa no topo avisa que o ensaio está ligado, e ao sair tudo volta exatamente como estava.
+- **SEGURANÇA DO ALERTA DE BINGO:** O alerta de "BINGO!" enviado pelo público passou a tratar nome, CPF e identificador apenas como texto, impedindo que alguém mal-intencionado interfira no painel do organizador.
+- **CPF PROTEGIDO NO TELÃO:** O alerta mostra só o meio do CPF (***.456.789-**). Um clique na linha revela o número completo para a conferência.
+- **NOVO JOGO SEM INTERNET:** Iniciar um Novo Jogo não trava mais quando o computador está sem conexão.
+
+**v8.0**
 - **NOVO NOME: PRÊMIOSHOW:** O programa passa a se chamar PrêmioShow. Quem usava o nome padrão "Bingo Show" recebe o novo nome automaticamente; nomes personalizados de evento são mantidos.
 - **NOVO LOGO E ÍCONES:** O bilhete premiado, com raios de luz, serpentinas e confete, passa a ser o logo e o ícone do aplicativo. Quem usava o logo padrão antigo recebe o novo automaticamente; logos próprios do evento são mantidos.
 - **NOVO JOGO TOTAL & REINICIALIZAÇÃO LIMPA:** Ao iniciar um Novo Jogo, todos os dados da partida anterior (números sorteados, ganhadores, cartelas, histórico e patrocinadores) são completamente apagados de maneira segura, garantindo um novo início 100% limpo.

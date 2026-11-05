@@ -19,3 +19,5 @@ jobs:
         run: npm run lint
       - name: Teste de fumaça do painel
         run: npm run test:smoke
+      - name: Teste do Modo Ensaio
+        run: node tests/smoke/rehearsal.mjs
