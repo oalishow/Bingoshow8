@@ -8272,12 +8272,20 @@ function showRoundEditModal(gameNumber: string) {
                             if ((appStore as any).firebaseSyncTimeout) clearTimeout((appStore as any).firebaseSyncTimeout);
 
                             if (appStore.state.appConfig.eventId) {
+                                // Avisa os painéis públicos, mas sem travar o Novo Jogo:
+                                // sem internet o Firestore nunca confirma a gravação, então
+                                // esperamos no máximo 3 segundos (e nada, se estiver offline).
                                 try {
-                                    await setDoc(doc(session.db, "events", appStore.state.appConfig.eventId), { 
+                                    const notifyPublicPanels = setDoc(doc(session.db, "events", appStore.state.appConfig.eventId), { 
                                         isReset: true,
                                         activeGameNumber: '',
                                         fullStateJSON: ''
-                                    }, { merge: true });
+                                    }, { merge: true }).catch((e) => {
+                                        console.error("Erro ao notificar painéis públicos:", e);
+                                    });
+                                    if (navigator.onLine) {
+                                        await Promise.race([notifyPublicPanels, new Promise((resolve) => setTimeout(resolve, 3000))]);
+                                    }
                                 } catch (e) {
                                     console.error("Erro ao notificar painéis públicos:", e);
                                 }

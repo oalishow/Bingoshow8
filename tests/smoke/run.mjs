@@ -282,9 +282,8 @@ try {
 
     const before = await savedState();
 
-    // "Novo Jogo" não entra no roteiro: sem internet ele espera o Firestore
-    // responder antes de recarregar e fica parado. Em vez disso, o backup é
-    // carregado num navegador limpo, que cobre o mesmo caminho de restauração.
+    // O backup é carregado num navegador limpo, que cobre o caminho de
+    // restauração. O Novo Jogo é testado no fim, neste mesmo navegador.
     await step('abre um painel limpo em outro navegador', async () => {
         const context = await browser.createBrowserContext();
         page = await newPage(context);
@@ -308,6 +307,22 @@ try {
     });
 
     const after = await savedState();
+
+    // Sem internet (a rede externa está bloqueada), o Novo Jogo não pode
+    // ficar esperando o Firestore: precisa apagar tudo e recarregar.
+    await step('inicia um Novo Jogo sem internet', async () => {
+        await click('#reset-event-btn');
+        await waitFor(() => page.evaluate(() => !!document.getElementById('confirm-reset-btn')), 'modal do Novo Jogo');
+        await Promise.all([
+            page.waitForNavigation({ waitUntil: 'load', timeout: 8000 }),
+            click('#confirm-reset-btn'),
+        ]);
+        await waitFor(() => page.evaluate(() => document.querySelectorAll('.game-item').length === 6), 'painel recarregado');
+        const s = await savedState();
+        assert.equal(JSON.stringify(s?.gamesData ?? {}).includes('Maria Teste'), false, 'dados da partida anterior apagados');
+        assert.equal(Object.keys(s?.cardsData ?? {}).length, 0, 'cartelas apagadas');
+    });
+
     result = { backup: normalize(backup), before: normalize(before), restored: normalize(after) };
 } finally {
     await browser.close();
