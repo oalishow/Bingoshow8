@@ -1,5 +1,5 @@
 // Constantes do painel do apresentador.
-export const currentVersion = "8.0";
+export const currentVersion = "8.1";
 export const buildInfo = "Build: 20/08/2026 - 10:00"; // Data e hora em formato DD/MM/AAAA 
 export const DYNAMIC_LETTERS = ['B', 'I', 'N', 'G', 'O'];
 export const DYNAMIC_LETTERS_AJUDE = ['A', 'J', 'U', 'D', 'E'];
