@@ -11,24 +11,19 @@ import { getFirestore, doc, setDoc, onSnapshot, collection, getDoc, getDocs, wri
 import firebaseConfig from './firebase-applet-config.json';
 import { sounds } from './audio';
 import { versionHistory } from './src/core/changelog';
+import { session } from './src/core/session';
 import { currentVersion, buildInfo, DYNAMIC_LETTERS, DYNAMIC_LETTERS_AJUDE, BINGO_CONFIG, roundColors, predefinedPrizes, winnerDisplayDuration } from './src/core/constants';
 
-let firebaseApp: any;
-let auth: any;
-let db: any;
 
 try {
-    firebaseApp = initializeApp(firebaseConfig);
-    auth = getAuth(firebaseApp);
-    db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+    session.firebaseApp = initializeApp(firebaseConfig);
+    session.auth = getAuth(session.firebaseApp);
+    session.db = getFirestore(session.firebaseApp, firebaseConfig.firestoreDatabaseId);
 } catch (error) {
     console.error("Failed to initialize Firebase:", error);
     // Continue execution so the offline app still works
 }
 
-let firebaseUser: any = null;
-let syncEnabled = false;
-let eventId = '';
 
 // Memória temporária para quando localStorage ou IndexedDB falharem/forem bloqueados pelo navegador
 const memoryLocalStorage: Record<string, string> = {};
@@ -535,13 +530,13 @@ const appStore = {
 
             debouncedFirebaseSync(immediate = false) {
                 if (!this.state.appConfig.onlineSyncEnabled || this.isResetting) return;
-                if (!eventId) {
-                    eventId = this.state.appConfig.eventId || safeLocalStorage.getItem('bingo_persistent_event_id') || '';
+                if (!session.eventId) {
+                    session.eventId = this.state.appConfig.eventId || safeLocalStorage.getItem('bingo_persistent_event_id') || '';
                 }
-                if (!eventId) return;
+                if (!session.eventId) return;
                 // As regras do Firestore só aceitam gravações do organizador logado.
-                if (!auth || !auth.currentUser) return;
-                firebaseUser = auth.currentUser;
+                if (!session.auth || !session.auth.currentUser) return;
+                session.firebaseUser = session.auth.currentUser;
                 clearTimeout((this as any).firebaseSyncTimeout);
                 
                 const performSync = async () => {
@@ -555,7 +550,7 @@ const appStore = {
                     (this as any).isSyncingFirebase = true;
                     try {
                         const eventData: any = {
-                            hostId: firebaseUser.uid,
+                            hostId: session.firebaseUser.uid,
                             activeGameNumber: this.state.activeGameNumber || '',
                             appName: this.state.appConfig.appName || '',
                             bingoTitle: this.state.appConfig.bingoTitle || '',
@@ -640,28 +635,28 @@ const appStore = {
                         
                         if (mainStateChanged) {
                             try {
-                                await setDoc(doc(db, "events", eventId), eventData, { merge: true });
+                                await setDoc(doc(session.db, "events", session.eventId), eventData, { merge: true });
                             } catch (err: any) {
                                 if (err?.code !== 'permission-denied') throw err;
                                 // O evento pertence a outra conta (ou foi criado antes do login
                                 // ser obrigatório). Cria um evento novo para este organizador.
-                                const oldEventId = eventId;
-                                eventId = 'event-' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
-                                this.state.appConfig.eventId = eventId;
-                                safeLocalStorage.setItem('bingo_persistent_event_id', eventId);
+                                const oldEventId = session.eventId;
+                                session.eventId = 'event-' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+                                this.state.appConfig.eventId = session.eventId;
+                                safeLocalStorage.setItem('bingo_persistent_event_id', session.eventId);
                                 (this as any)._lastSyncedGames = {};
-                                await setDoc(doc(db, "events", eventId), eventData, { merge: true });
+                                await setDoc(doc(session.db, "events", session.eventId), eventData, { merge: true });
                                 this.saveStateToLocalStorage();
-                                window.alert(`Este evento (${oldEventId}) pertence a outra conta ou foi criado sem login, então foi criado um novo ID de evento para você: ${eventId}.\n\nGere um novo QR Code do Painel do Público e use "Forçar Envio de Cartelas para a Nuvem" para atualizar as cartelas digitais.`);
+                                window.alert(`Este evento (${oldEventId}) pertence a outra conta ou foi criado sem login, então foi criado um novo ID de evento para você: ${session.eventId}.\n\nGere um novo QR Code do Painel do Público e use "Forçar Envio de Cartelas para a Nuvem" para atualizar as cartelas digitais.`);
                             }
                         }
 
                         for (let i = 0; i < gamesToSync.length; i += 100) {
-                            const batch = writeBatch(db);
+                            const batch = writeBatch(session.db);
                             const chunk = gamesToSync.slice(i, i + 100);
                             for (const gameId of chunk) {
                                 const game = this.state.gamesData[gameId];
-                                const gameRef = doc(db, `events/${eventId}/games`, gameId);
+                                const gameRef = doc(session.db, `events/${session.eventId}/games`, gameId);
                                 batch.set(gameRef, {
                                     name: game.name || `Rodada ${gameId}`,
                                     color: game.color || '',
@@ -864,23 +859,15 @@ const appStore = {
         };
 
         // --- Transient UI State (not persisted) ---
-        let floatingNumberTimeout: ReturnType<typeof setTimeout> | null = null;
-        let intervalContentInterval: any;
-        let intervalClockInterval: any;
-        let breakConfettiInterval: any;
-        let finalConfettiInterval: any; let finalSponsorsInterval: any;
         
-        let clockInterval: any;
-        let confettiAnimationId: number;
-        let spinTimeout: any;
-        let cycloneInterval: any;
-        let winnerDisplayTimeout: any; 
+        
+        
+        
+        
+         
 
         // --- Virtualization State for Large Datasets (2000+ attendees/winners) ---
-        let winnerSearchFilter = '';
-        let winnersVisibleCount = 30;
         const WINNERS_BATCH_SIZE = 30;
-        let isWinnersScrollBound = false;
 
 
         // --- Seletores de Elementos Reativos (Lazy Getters com Fallback Seguro) ---
@@ -2544,8 +2531,8 @@ function showDrawnPrizesModal() {
 }
 
 async function showFinalWinnersModal(isEndOfEvent: boolean = true) {
-    if (finalConfettiInterval) clearInterval(finalConfettiInterval);
-    if (typeof finalSponsorsInterval !== "undefined" && finalSponsorsInterval) clearInterval(finalSponsorsInterval);
+    if (session.finalConfettiInterval) clearInterval(session.finalConfettiInterval);
+    if (typeof session.finalSponsorsInterval !== "undefined" && session.finalSponsorsInterval) clearInterval(session.finalSponsorsInterval);
 
     let finalModal = DOMElements.finalWinnersModal || document.getElementById('final-winners-modal');
     if (!finalModal) {
@@ -2649,7 +2636,7 @@ async function showFinalWinnersModal(isEndOfEvent: boolean = true) {
         
         cycleFinalSponsors();
         const cycleTime = (appStore.state.appConfig.sponsorDisplaySeconds || 10) * 1000;
-        finalSponsorsInterval = setInterval(cycleFinalSponsors, cycleTime);
+        session.finalSponsorsInterval = setInterval(cycleFinalSponsors, cycleTime);
     } else {
         if (sponsorsSection) sponsorsSection.classList.add('hidden');
         if (pixSection) pixSection.classList.add('md:col-span-2');
@@ -2755,9 +2742,9 @@ async function showFinalWinnersModal(isEndOfEvent: boolean = true) {
         }, 500);
     };
 
-    if (winnerDisplayTimeout) clearInterval(winnerDisplayTimeout);
+    if (session.winnerDisplayTimeout) clearInterval(session.winnerDisplayTimeout);
     displayNextWinner();
-    winnerDisplayTimeout = setInterval(displayNextWinner, winnerDisplayDuration);
+    session.winnerDisplayTimeout = setInterval(displayNextWinner, winnerDisplayDuration);
 
     const startConfetti = () => {
         const c = getConfettiFn();
@@ -2768,14 +2755,14 @@ async function showFinalWinnersModal(isEndOfEvent: boolean = true) {
             });
         }
     };
-    finalConfettiInterval = setInterval(startConfetti, 150);
+    session.finalConfettiInterval = setInterval(startConfetti, 150);
 
     const closeFinalBtn = document.getElementById('close-final-modal-btn');
     if (closeFinalBtn) {
         closeFinalBtn.onclick = () => {
             if (DOMElements.finalWinnersModal) DOMElements.finalWinnersModal.classList.add('hidden');
-            if (winnerDisplayTimeout) clearInterval(winnerDisplayTimeout);
-            if (finalConfettiInterval) clearInterval(finalConfettiInterval);
+            if (session.winnerDisplayTimeout) clearInterval(session.winnerDisplayTimeout);
+            if (session.finalConfettiInterval) clearInterval(session.finalConfettiInterval);
         };
     }
 
@@ -3830,12 +3817,12 @@ function showSettingsModal() {
         const logoutBtn = document.getElementById('host-logout-btn');
         const userInfo = document.getElementById('host-user-info');
         
-        if (firebaseUser && !firebaseUser.isAnonymous) {
+        if (session.firebaseUser && !session.firebaseUser.isAnonymous) {
             if (loginBtn) loginBtn.classList.add('hidden');
             if (loginGoogleBtn) loginGoogleBtn.classList.add('hidden');
             if (logoutBtn) logoutBtn.classList.remove('hidden');
             if (userInfo) {
-                userInfo.textContent = `Logado como: ${firebaseUser.displayName || 'Usuário'} (${firebaseUser.email || 'N/A'})`;
+                userInfo.textContent = `Logado como: ${session.firebaseUser.displayName || 'Usuário'} (${session.firebaseUser.email || 'N/A'})`;
                 userInfo.classList.remove('hidden');
             }
         } else {
@@ -3851,7 +3838,7 @@ function showSettingsModal() {
     document.getElementById('host-login-facebook-btn')?.addEventListener('click', async () => {
         try {
             const provider = new FacebookAuthProvider();
-            await signInWithPopup(auth, provider);
+            await signInWithPopup(session.auth, provider);
             // onAuthStateChanged will handle the rest
             updateHostAuthUI();
             showAlert("Login com Facebook realizado com sucesso!");
@@ -3864,7 +3851,7 @@ function showSettingsModal() {
     document.getElementById('host-login-google-btn')?.addEventListener('click', async () => {
         try {
             const provider = new GoogleAuthProvider();
-            await signInWithPopup(auth, provider);
+            await signInWithPopup(session.auth, provider);
             // onAuthStateChanged will handle the rest
             updateHostAuthUI();
             showAlert("Login com Google realizado com sucesso!");
@@ -3876,7 +3863,7 @@ function showSettingsModal() {
 
     document.getElementById('host-logout-btn')?.addEventListener('click', async () => {
         try {
-            await signOut(auth);
+            await signOut(session.auth);
             // await signInAnonymously(auth); // re-authenticate as anonymous
             updateHostAuthUI();
             showAlert("Desconectado com sucesso.");
@@ -3917,24 +3904,24 @@ function showSettingsModal() {
     passwordInput.addEventListener('change', () => appStore.debouncedSave());
 
     document.getElementById('force-sync-cards-btn')?.addEventListener('click', async () => {
-        if (!eventId) return;
-        if (!auth.currentUser) {
+        if (!session.eventId) return;
+        if (!session.auth.currentUser) {
             showAlert("Faça login com Google ou Facebook para enviar as cartelas para a nuvem.");
             return;
         }
-        firebaseUser = auth.currentUser;
+        session.firebaseUser = session.auth.currentUser;
         const btn = document.getElementById('force-sync-cards-btn') as HTMLButtonElement;
         const originalText = btn.textContent;
         btn.textContent = "Sincronizando...";
         btn.disabled = true;
         try {
-            let currentBatch = writeBatch(db);
+            let currentBatch = writeBatch(session.db);
             let docCount = 0;
             const entries = Object.entries(appStore.state.cardsData);
             for (const [uuid, cardData] of entries) {
-                currentBatch.set(doc(db, "cards", uuid), {
-                    hostId: firebaseUser.uid,
-                    eventId: eventId,
+                currentBatch.set(doc(session.db, "cards", uuid), {
+                    hostId: session.firebaseUser.uid,
+                    eventId: session.eventId,
                     series: cardData.series,
                     numbersString: JSON.stringify(cardData.numbers)
                 });
@@ -3942,7 +3929,7 @@ function showSettingsModal() {
                 if (docCount === 100) {
                     await currentBatch.commit();
                     await new Promise(r => setTimeout(r, 2000));
-                    currentBatch = writeBatch(db);
+                    currentBatch = writeBatch(session.db);
                     docCount = 0;
                 }
             }
@@ -3960,7 +3947,7 @@ function showSettingsModal() {
     });
     
     // Updates the sync status UI
-    if (appConfig.onlineSyncEnabled && eventId) {
+    if (appConfig.onlineSyncEnabled && session.eventId) {
         updateSyncStatusUI();
     }
 
@@ -4058,7 +4045,6 @@ function showSettingsModal() {
         
         // --- Funções Auxiliares ---
 
-let fsConfettiInstance: any = null;
 
 function getConfettiFn() {
     if (typeof confetti !== 'function') return null;
@@ -4076,16 +4062,16 @@ function getConfettiFn() {
              canvas.style.pointerEvents = 'none';
              canvas.style.zIndex = '1000';
              fsElement.appendChild(canvas);
-             fsConfettiInstance = confetti.create(canvas, { resize: true, useWorker: true });
+             session.fsConfettiInstance = confetti.create(canvas, { resize: true, useWorker: true });
          } else {
              if (canvas.parentNode !== fsElement) {
                  fsElement.appendChild(canvas);
              }
-             if (!fsConfettiInstance) {
-                 fsConfettiInstance = confetti.create(canvas, { resize: true, useWorker: true });
+             if (!session.fsConfettiInstance) {
+                 session.fsConfettiInstance = confetti.create(canvas, { resize: true, useWorker: true });
              }
          }
-         return fsConfettiInstance;
+         return session.fsConfettiInstance;
     }
     return confetti;
 }
@@ -4110,8 +4096,8 @@ function triggerBingoWinConfetti() {
         return Math.random() * (max - min) + min;
     }
 
-    if (confettiAnimationId) {
-        clearInterval(confettiAnimationId);
+    if (session.confettiAnimationId) {
+        clearInterval(session.confettiAnimationId);
     }
 
     const interval = setInterval(function() {
@@ -4125,7 +4111,7 @@ function triggerBingoWinConfetti() {
         c({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
         c({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
     }, 250);
-    confettiAnimationId = interval as unknown as number;
+    session.confettiAnimationId = interval as unknown as number;
 }
 
 function applyBoardZoom(scale: number) {
@@ -4301,29 +4287,27 @@ function applyAuctionZoom(scale: number) {
         const DB_NAME = 'BingoShowDB';
         const STORE_NAME_IMAGES = 'sponsorImages';
         const STORE_NAME_CARDS = 'cards';
-        let dbPromise: Promise<IDBDatabase> | null = null;
-        let isIndexedDBAvailable = true;
 
         // Memória temporária para imagens e cartelas caso IndexedDB falhe
         const memoryImagesStore: Record<string, string> = {};
         const memoryCardsStore: Record<string, any> = {};
 
         function openDb(): Promise<IDBDatabase> {
-            if (!isIndexedDBAvailable) {
+            if (!session.isIndexedDBAvailable) {
                 return Promise.reject("IndexedDB está desativado ou indisponível.");
             }
-            if (!dbPromise) {
-                dbPromise = new Promise((resolve, reject) => {
+            if (!session.dbPromise) {
+                session.dbPromise = new Promise((resolve, reject) => {
                     const timeoutId = setTimeout(() => {
                         console.warn("[Storage] Timeout ao conectar com IndexedDB. Usando modo memória.");
-                        isIndexedDBAvailable = false;
+                        session.isIndexedDBAvailable = false;
                         reject("Timeout IndexedDB");
                     }, 1500);
 
                     try {
                         if (typeof indexedDB === 'undefined') {
                             clearTimeout(timeoutId);
-                            isIndexedDBAvailable = false;
+                            session.isIndexedDBAvailable = false;
                             reject("IndexedDB não suportado neste navegador.");
                             return;
                         }
@@ -4331,13 +4315,13 @@ function applyAuctionZoom(scale: number) {
                         request.onblocked = () => {
                             clearTimeout(timeoutId);
                             console.warn("[Storage] Conexão com IndexedDB bloqueada por outra aba/processo.");
-                            isIndexedDBAvailable = false;
+                            session.isIndexedDBAvailable = false;
                             reject("IndexedDB bloqueado");
                         };
                         request.onerror = (e) => {
                             clearTimeout(timeoutId);
                             console.error("[Storage] Erro ao abrir IndexedDB, caindo para modo memória temporária.", e);
-                            isIndexedDBAvailable = false;
+                            session.isIndexedDBAvailable = false;
                             reject("Erro ao abrir IndexedDB.");
                         };
                         request.onsuccess = () => {
@@ -4356,12 +4340,12 @@ function applyAuctionZoom(scale: number) {
                     } catch (err) {
                         clearTimeout(timeoutId);
                         console.error("[Storage] Exceção ao inicializar IndexedDB (pode ser restrição de iframe do Chrome):", err);
-                        isIndexedDBAvailable = false;
+                        session.isIndexedDBAvailable = false;
                         reject(err);
                     }
                 });
             }
-            return dbPromise;
+            return session.dbPromise;
         }
 
         async function saveSponsorImage(id: string, image: string) {
@@ -4622,10 +4606,10 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                     appStore.state.appConfig.onlineSyncEnabled = true;
                     
                     // Atualiza a variável global eventId e os armazenamentos locais
-                    eventId = appStore.state.appConfig.eventId;
-                    safeLocalStorage.setItem('bingo_persistent_event_id', eventId);
+                    session.eventId = appStore.state.appConfig.eventId;
+                    safeLocalStorage.setItem('bingo_persistent_event_id', session.eventId);
                     try {
-                        localStorage.setItem('last_bingo_event_id', eventId);
+                        localStorage.setItem('last_bingo_event_id', session.eventId);
                     } catch (err) {}
 
                     // Reseta os caches de hash do Firebase para forçar o reenvio completo dos dados restaurados
@@ -4916,7 +4900,7 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                 appStore.state.pendingNumber = null;
                 appStore.debouncedFirebaseSync(true);
                 document.removeEventListener('keydown', handleKeydown);
-                clearTimeout(floatingNumberTimeout as ReturnType<typeof setTimeout>);
+                clearTimeout(session.floatingNumberTimeout as ReturnType<typeof setTimeout>);
             };
 
             const confirmAndClose = () => {
@@ -4949,10 +4933,10 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                 }
             };
 
-            clearTimeout(floatingNumberTimeout as ReturnType<typeof setTimeout>);
+            clearTimeout(session.floatingNumberTimeout as ReturnType<typeof setTimeout>);
 
             if (appConfig.enableModalAutoclose) {
-                floatingNumberTimeout = setTimeout(confirmAndClose, (appConfig.modalAutocloseSeconds || 3) * 1000);
+                session.floatingNumberTimeout = setTimeout(confirmAndClose, (appConfig.modalAutocloseSeconds || 3) * 1000);
             }
         }
 
@@ -5039,7 +5023,7 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                 appStore.state.pendingNumber = null;
                 appStore.debouncedFirebaseSync(true);
                 document.removeEventListener('keydown', handleKeydown);
-                clearTimeout(floatingNumberTimeout as ReturnType<typeof setTimeout>);
+                clearTimeout(session.floatingNumberTimeout as ReturnType<typeof setTimeout>);
                 if ((window as any).sponsorCountdownInterval) {
                     clearInterval((window as any).sponsorCountdownInterval);
                 }
@@ -5078,14 +5062,14 @@ Deseja MANTER o seu QR Code/Link atual para o público?
             let currentCountdownValue = appConfig.sponsorDisplaySeconds || 10;
             
             const startCountdown = (seconds: number) => {
-                clearTimeout(floatingNumberTimeout as ReturnType<typeof setTimeout>);
+                clearTimeout(session.floatingNumberTimeout as ReturnType<typeof setTimeout>);
                 if ((window as any).sponsorCountdownInterval) {
                     clearInterval((window as any).sponsorCountdownInterval);
                 }
                 
                 if (appConfig.enableModalAutoclose) {
                     const sponsorDuration = seconds * 1000; 
-                    floatingNumberTimeout = setTimeout(confirmAndAnnounce, sponsorDuration); 
+                    session.floatingNumberTimeout = setTimeout(confirmAndAnnounce, sponsorDuration); 
                     
                     if (appConfig.showSponsorCountdown) {
                         const wrapper = document.getElementById('sponsor-countdown-wrapper');
@@ -5151,8 +5135,6 @@ Deseja MANTER o seu QR Code/Link atual para o público?
             updateSpeedButtons();
         }
 
-        let prizeSponsorTimeout: ReturnType<typeof setTimeout> | null = null;
-        let prizeSponsorCountdownInterval: ReturnType<typeof setInterval> | null = null;
 
         function showPrizeDrawSponsorModal(drawnNumber: number, sponsor: { name: string; image?: string }) {
             const { appConfig } = appStore.state;
@@ -5242,8 +5224,8 @@ Deseja MANTER o seu QR Code/Link atual para o público?
 
             const cleanup = () => {
                 document.removeEventListener('keydown', handleKeydown);
-                if (prizeSponsorTimeout) clearTimeout(prizeSponsorTimeout);
-                if (prizeSponsorCountdownInterval) clearInterval(prizeSponsorCountdownInterval);
+                if (session.prizeSponsorTimeout) clearTimeout(session.prizeSponsorTimeout);
+                if (session.prizeSponsorCountdownInterval) clearInterval(session.prizeSponsorCountdownInterval);
             };
 
             const closeModal = () => {
@@ -5272,8 +5254,8 @@ Deseja MANTER o seu QR Code/Link atual para o público?
             const countdownText = document.getElementById('prize-sponsor-countdown-text');
 
             const startTimer = (seconds: number) => {
-                if (prizeSponsorTimeout) clearTimeout(prizeSponsorTimeout);
-                if (prizeSponsorCountdownInterval) clearInterval(prizeSponsorCountdownInterval);
+                if (session.prizeSponsorTimeout) clearTimeout(session.prizeSponsorTimeout);
+                if (session.prizeSponsorCountdownInterval) clearInterval(session.prizeSponsorCountdownInterval);
 
                 let remaining = seconds;
                 const total = seconds;
@@ -5289,15 +5271,15 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                     }, 50);
                 }
 
-                prizeSponsorCountdownInterval = setInterval(() => {
+                session.prizeSponsorCountdownInterval = setInterval(() => {
                     remaining--;
                     if (countdownText) countdownText.textContent = remaining.toString();
                     if (remaining <= 0) {
-                        if (prizeSponsorCountdownInterval) clearInterval(prizeSponsorCountdownInterval);
+                        if (session.prizeSponsorCountdownInterval) clearInterval(session.prizeSponsorCountdownInterval);
                     }
                 }, 1000);
 
-                prizeSponsorTimeout = setTimeout(() => {
+                session.prizeSponsorTimeout = setTimeout(() => {
                     closeModal();
                 }, seconds * 1000);
             };
@@ -5361,8 +5343,8 @@ Deseja MANTER o seu QR Code/Link atual para o público?
             const finishAnimation = (drawnNumber: number) => {
                 const { appConfig } = appStore.state;
                 if (appStore.state.appConfig.enableSoundEffects) sounds.playDrawNumber();
-                clearTimeout(spinTimeout);
-                if(cycloneInterval) clearInterval(cycloneInterval);
+                clearTimeout(session.spinTimeout);
+                if(session.cycloneInterval) clearInterval(session.cycloneInterval);
                 const letter = getLetterForNumber(drawnNumber);
                 
                 const finalColor = appConfig.drawnTextColor;
@@ -5396,7 +5378,7 @@ Deseja MANTER o seu QR Code/Link atual para o público?
             const randomIndex = Math.floor(Math.random() * availableNumbers.length);
             const drawnNumber = availableNumbers[randomIndex];
 
-            spinTimeout = setTimeout(() => finishAnimation(drawnNumber), 4000);
+            session.spinTimeout = setTimeout(() => finishAnimation(drawnNumber), 4000);
             skipBtn.onclick = () => finishAnimation(drawnNumber);
         }
         
@@ -5583,7 +5565,7 @@ Deseja MANTER o seu QR Code/Link atual para o público?
 
         function loadRoundState(gameNumber: string | null) {
             const { gamesData, appLabels } = appStore.state;
-            clearInterval(clockInterval);
+            clearInterval(session.clockInterval);
             
             if ((window as any).masterBingoClaimsUnsub) {
                (window as any).masterBingoClaimsUnsub();
@@ -5651,7 +5633,7 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                 timeEl.textContent = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             };
             updateClock();
-            clockInterval = setInterval(updateClock, 1000);
+            session.clockInterval = setInterval(updateClock, 1000);
 
             updateActiveRoundStats();
             
@@ -5674,8 +5656,8 @@ Deseja MANTER o seu QR Code/Link atual para o público?
             updateLastPrizesDisplay();
             
             // Listen to Bingo Claims from online players
-            if (appStore.state.appConfig.onlineSyncEnabled && eventId && gameNumber) {
-               const claimsRef = collection(db, `events/${eventId}/games/${gameNumber}/bingoClaims`);
+            if (appStore.state.appConfig.onlineSyncEnabled && session.eventId && gameNumber) {
+               const claimsRef = collection(session.db, `events/${session.eventId}/games/${gameNumber}/bingoClaims`);
                let initialLoad = true;
                (window as any).masterBingoClaimsUnsub = onSnapshot(claimsRef, (snapshot) => {
                    if (initialLoad) {
@@ -6440,7 +6422,7 @@ Deseja MANTER o seu QR Code/Link atual para o público?
             
             const cleanupWinnerModal = () => {
                 if (countdownInterval) clearInterval(countdownInterval);
-                if (confettiAnimationId) clearInterval(confettiAnimationId);
+                if (session.confettiAnimationId) clearInterval(session.confettiAnimationId);
                 document.removeEventListener('keydown', handleKeydown);
                 appStore.state.isVerifying = false;
                 appStore.debouncedSave(true);
@@ -6552,7 +6534,7 @@ Deseja MANTER o seu QR Code/Link atual para o público?
             });
             allWinners.sort((a: any, b: any) => b.id - a.id);
 
-            const query = winnerSearchFilter.trim().toLowerCase();
+            const query = session.winnerSearchFilter.trim().toLowerCase();
             const filtered = query
                 ? allWinners.filter((w: any) => {
                     const name = (w.name || '').toLowerCase();
@@ -6568,7 +6550,7 @@ Deseja MANTER o seu QR Code/Link atual para o público?
             if (!searchInput || !listWrapper) {
                 DOMElements.winnersContainer.innerHTML = `
                     <div class="sticky top-0 z-10 bg-slate-100 dark:bg-gray-800 pt-1 pb-2 space-y-1 border-b border-slate-200 dark:border-gray-700 mb-2">
-                        <input id="winners-search-input" type="text" placeholder="🔍 Pesquisar em ${allWinners.length} vencedores..." value="${winnerSearchFilter}" class="w-full text-xs font-medium p-2 rounded-lg border border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <input id="winners-search-input" type="text" placeholder="🔍 Pesquisar em ${allWinners.length} vencedores..." value="${session.winnerSearchFilter}" class="w-full text-xs font-medium p-2 rounded-lg border border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500">
                         <div id="winners-count-badge" class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold px-1 flex justify-between items-center">
                             <span>Total: ${allWinners.length} vencedores</span>
                             <span>${filtered.length < allWinners.length ? `(${filtered.length} filtrados)` : ''}</span>
@@ -6582,8 +6564,8 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                 listWrapper = document.getElementById('winners-list-wrapper')!;
 
                 searchInput.addEventListener('input', (e) => {
-                    winnerSearchFilter = (e.target as HTMLInputElement).value;
-                    winnersVisibleCount = WINNERS_BATCH_SIZE;
+                    session.winnerSearchFilter = (e.target as HTMLInputElement).value;
+                    session.winnersVisibleCount = WINNERS_BATCH_SIZE;
                     renderAllWinners();
                 });
             } else {
@@ -6606,7 +6588,7 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                 return;
             }
 
-            const itemsToRender = filtered.slice(0, winnersVisibleCount);
+            const itemsToRender = filtered.slice(0, session.winnersVisibleCount);
             const fragment = document.createDocumentFragment();
 
             itemsToRender.forEach((winner: any) => {
@@ -6617,7 +6599,7 @@ Deseja MANTER o seu QR Code/Link atual para o público?
 
             const loadMoreContainer = document.getElementById('winners-load-more-container');
             if (loadMoreContainer) {
-                if (winnersVisibleCount < filtered.length) {
+                if (session.winnersVisibleCount < filtered.length) {
                     loadMoreContainer.innerHTML = `
                         <div class="flex flex-col gap-1 items-center pb-2">
                             <p class="text-[11px] text-slate-500 dark:text-slate-400">Exibindo ${itemsToRender.length} de ${filtered.length} vencedores</p>
@@ -6633,12 +6615,12 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                     `;
 
                     document.getElementById('winners-load-more-btn')?.addEventListener('click', () => {
-                        winnersVisibleCount += WINNERS_BATCH_SIZE;
+                        session.winnersVisibleCount += WINNERS_BATCH_SIZE;
                         renderAllWinners();
                     });
 
                     document.getElementById('winners-load-all-btn')?.addEventListener('click', () => {
-                        winnersVisibleCount = filtered.length;
+                        session.winnersVisibleCount = filtered.length;
                         renderAllWinners();
                     });
                 } else if (filtered.length > WINNERS_BATCH_SIZE) {
@@ -6650,13 +6632,13 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                 }
             }
 
-            if (!isWinnersScrollBound) {
-                isWinnersScrollBound = true;
+            if (!session.isWinnersScrollBound) {
+                session.isWinnersScrollBound = true;
                 DOMElements.winnersContainer.addEventListener('scroll', () => {
                     const container = DOMElements.winnersContainer;
                     if (container.scrollTop + container.clientHeight >= container.scrollHeight - 100) {
-                        if (winnersVisibleCount < filtered.length) {
-                            winnersVisibleCount += WINNERS_BATCH_SIZE;
+                        if (session.winnersVisibleCount < filtered.length) {
+                            session.winnersVisibleCount += WINNERS_BATCH_SIZE;
                             renderAllWinners();
                         }
                     }
@@ -6703,7 +6685,7 @@ Deseja MANTER o seu QR Code/Link atual para o público?
             DOMElements.congratsModal.classList.remove('hidden');
             document.getElementById('close-congrats-modal-btn')!.onclick = () => {
                 DOMElements.congratsModal.classList.add('hidden');
-                if (confettiAnimationId) clearInterval(confettiAnimationId);
+                if (session.confettiAnimationId) clearInterval(session.confettiAnimationId);
             };
             triggerConfetti();
         }
@@ -6853,14 +6835,14 @@ Deseja MANTER o seu QR Code/Link atual para o público?
             // Start confetti
             triggerConfetti();
             
-            if (intervalContentInterval) clearInterval(intervalContentInterval);
-            if (intervalClockInterval) clearInterval(intervalClockInterval);
-            if (breakConfettiInterval) clearInterval(breakConfettiInterval);
+            if (session.intervalContentInterval) clearInterval(session.intervalContentInterval);
+            if (session.intervalClockInterval) clearInterval(session.intervalClockInterval);
+            if (session.breakConfettiInterval) clearInterval(session.breakConfettiInterval);
             
             const cycleTime = (appConfig.sponsorDisplaySeconds || 10) * 1000;
-            intervalContentInterval = setInterval(updateContent, cycleTime);
-            intervalClockInterval = setInterval(updateClock, 1000);
-            breakConfettiInterval = setInterval(triggerConfetti, 3500);
+            session.intervalContentInterval = setInterval(updateContent, cycleTime);
+            session.intervalClockInterval = setInterval(updateClock, 1000);
+            session.breakConfettiInterval = setInterval(triggerConfetti, 3500);
             
             const openIntervalQrBtn = document.getElementById('open-interval-qr-btn');
             if (openIntervalQrBtn) {
@@ -6877,9 +6859,9 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                     e.preventDefault();
                     e.stopPropagation();
                     if (DOMElements.eventBreakModal) DOMElements.eventBreakModal.classList.add('hidden');
-                    if (intervalContentInterval) clearInterval(intervalContentInterval);
-                    if (intervalClockInterval) clearInterval(intervalClockInterval);
-                    if (breakConfettiInterval) clearInterval(breakConfettiInterval);
+                    if (session.intervalContentInterval) clearInterval(session.intervalContentInterval);
+                    if (session.intervalClockInterval) clearInterval(session.intervalClockInterval);
+                    if (session.breakConfettiInterval) clearInterval(session.breakConfettiInterval);
                     if (DOMElements.confettiCanvas) DOMElements.confettiCanvas.style.zIndex = '50';
                 };
             }
@@ -6891,9 +6873,9 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                         showIntervalQrModal();
                     } else if (target.closest('#close-break-modal-btn')) {
                         if (DOMElements.eventBreakModal) DOMElements.eventBreakModal.classList.add('hidden');
-                        if (intervalContentInterval) clearInterval(intervalContentInterval);
-                        if (intervalClockInterval) clearInterval(intervalClockInterval);
-                        if (breakConfettiInterval) clearInterval(breakConfettiInterval);
+                        if (session.intervalContentInterval) clearInterval(session.intervalContentInterval);
+                        if (session.intervalClockInterval) clearInterval(session.intervalClockInterval);
+                        if (session.breakConfettiInterval) clearInterval(session.breakConfettiInterval);
                         if (DOMElements.confettiCanvas) DOMElements.confettiCanvas.style.zIndex = '50';
                     }
                 };
@@ -7536,16 +7518,16 @@ function showRoundEditModal(gameNumber: string) {
             }
 
             // Sync to firebase in background if needed
-            if (appStore.state.appConfig.onlineSyncEnabled && eventId && auth?.currentUser) {
-                firebaseUser = auth.currentUser;
+            if (appStore.state.appConfig.onlineSyncEnabled && session.eventId && session.auth?.currentUser) {
+                session.firebaseUser = session.auth.currentUser;
                 const syncToFirebase = async () => {
                     try {
-                        let currentBatch = writeBatch(db);
+                        let currentBatch = writeBatch(session.db);
                         let docCount = 0;
                         for (const [uuid, cardData] of Object.entries(newCardsBatch)) {
-                            currentBatch.set(doc(db, "cards", uuid), {
-                                hostId: firebaseUser.uid,
-                                eventId: eventId,
+                            currentBatch.set(doc(session.db, "cards", uuid), {
+                                hostId: session.firebaseUser.uid,
+                                eventId: session.eventId,
                                 series: cardData.series,
                                 numbersString: JSON.stringify(cardData.numbers)
                             });
@@ -7553,7 +7535,7 @@ function showRoundEditModal(gameNumber: string) {
                             if (docCount === 100) {
                                 await currentBatch.commit();
                                 await new Promise(r => setTimeout(r, 2000));
-                                currentBatch = writeBatch(db);
+                                currentBatch = writeBatch(session.db);
                                 docCount = 0;
                             }
                         }
@@ -7815,8 +7797,6 @@ function showRoundEditModal(gameNumber: string) {
              });
         }
 
-        let scannerStream: MediaStream | null = null;
-        let scannerAnimationId: number | null = null;
 
         async function verifyCardByQRCode(scannedData: string) {
             let uuid = scannedData;
@@ -8235,7 +8215,7 @@ function showRoundEditModal(gameNumber: string) {
 
                             if (appStore.state.appConfig.eventId) {
                                 try {
-                                    await setDoc(doc(db, "events", appStore.state.appConfig.eventId), { 
+                                    await setDoc(doc(session.db, "events", appStore.state.appConfig.eventId), { 
                                         isReset: true,
                                         activeGameNumber: '',
                                         fullStateJSON: ''
@@ -8362,14 +8342,14 @@ function showRoundEditModal(gameNumber: string) {
                         
                         attendeeQrModal.classList.remove('hidden');
                         
-                        if (eventId) {
+                        if (session.eventId) {
                             generateAttendeeQr();
                         } else {
                             if (attendeeQrUrlText) attendeeQrUrlText.textContent = "Conectando e gerando link...";
                             // Wait for eventId to be generated by Firebase init
                             let checks = 0;
                             const checkInterval = setInterval(() => {
-                                if (eventId) {
+                                if (session.eventId) {
                                     clearInterval(checkInterval);
                                     generateAttendeeQr();
                                 } else if (checks > 20) { // 10 seconds max wait
@@ -8397,7 +8377,7 @@ function showRoundEditModal(gameNumber: string) {
                         if (!basePath.endsWith('/')) {
                             basePath += '/';
                         }
-                        const attendeeUrl = `${origin}${basePath}attendee.html?event=${encodeURIComponent(eventId)}`;
+                        const attendeeUrl = `${origin}${basePath}attendee.html?event=${encodeURIComponent(session.eventId)}`;
                         
                         attendeeQrUrlText.textContent = attendeeUrl;
                         (attendeeQrUrlText as HTMLAnchorElement).href = attendeeUrl;
@@ -8988,7 +8968,7 @@ function showRoundEditModal(gameNumber: string) {
                             const btn = document.getElementById('confirm-load-cloud-btn') as HTMLButtonElement;
                             if (btn) btn.disabled = true;
 
-                            if (!firebaseUser) {
+                            if (!session.firebaseUser) {
                                 try {
                                     // await signInAnonymously(auth);
                                 } catch (e) {
@@ -9000,7 +8980,7 @@ function showRoundEditModal(gameNumber: string) {
                             }
 
                             try {
-                                const docSnap = await getDoc(doc(db, "events", eventIdToLoad));
+                                const docSnap = await getDoc(doc(session.db, "events", eventIdToLoad));
                                 if (docSnap.exists()) {
                                     const data = docSnap.data();
                                     if (data.fullStateJSON) {
@@ -9017,7 +8997,7 @@ function showRoundEditModal(gameNumber: string) {
                                         appStore.loadStateFromObject(parsedState);
                                         appStore.state.appConfig.eventId = eventIdToLoad;
                                         appStore.state.appConfig.onlineSyncEnabled = true;
-                                        eventId = eventIdToLoad;
+                                        session.eventId = eventIdToLoad;
                                         safeLocalStorage.setItem('bingo_persistent_event_id', eventIdToLoad);
                                         try {
                                             localStorage.setItem('last_bingo_event_id', eventIdToLoad);
@@ -9216,7 +9196,7 @@ function showRoundEditModal(gameNumber: string) {
             if (!cardData) {
                 // Try fetching from Firebase
                 try {
-                    const docSnap = await getDoc(doc(db, "cards", uuid));
+                    const docSnap = await getDoc(doc(session.db, "cards", uuid));
                     if (docSnap.exists()) {
                         const data = docSnap.data();
                         cardData = {
@@ -9291,7 +9271,7 @@ function showRoundEditModal(gameNumber: string) {
                     
                     try {
                         const activeGame = (window as any).currentActiveGame;
-                        const claimsRef = doc(db, `events/${cardEventId}/games/${activeGame}/bingoClaims`, uuid);
+                        const claimsRef = doc(session.db, `events/${cardEventId}/games/${activeGame}/bingoClaims`, uuid);
                         await setDoc(claimsRef, {
                             uuid,
                             series: cardData.series,
@@ -9366,7 +9346,7 @@ function showRoundEditModal(gameNumber: string) {
             // Realtime Sync Logic (Listen to Event and Games)
             if (cardEventId) {
                 // Anonymous sign-in for players
-                onAuthStateChanged(auth, async (user) => {
+                onAuthStateChanged(session.auth, async (user) => {
                     if (!user) {
                         try {
                             // await signInAnonymously(auth);
@@ -9379,7 +9359,7 @@ function showRoundEditModal(gameNumber: string) {
                     } else {
                         let lastActiveGame = '';
                         // Watch event
-                        onSnapshot(doc(db, "events", cardEventId), (docSnap) => {
+                        onSnapshot(doc(session.db, "events", cardEventId), (docSnap) => {
                            if (docSnap.exists()) {
                                const eventData = docSnap.data();
                                document.getElementById('digital-app-name')!.textContent = eventData.appName || "PrêmioShow";
@@ -9404,7 +9384,7 @@ function showRoundEditModal(gameNumber: string) {
                                        }
                                        
                                        // Watch active game
-                                       (window as any).currentGameUnsub = onSnapshot(doc(db, `events/${cardEventId}/games`, activeGame), (gameSnap) => {
+                                       (window as any).currentGameUnsub = onSnapshot(doc(session.db, `events/${cardEventId}/games`, activeGame), (gameSnap) => {
                                        if (gameSnap.exists()) {
                                             const gameData = gameSnap.data();
                                             statusBanner.innerHTML = `🟢 Sorteio Online: <strong>${gameData.name || activeGame}</strong>`;
@@ -9535,7 +9515,7 @@ function showRoundEditModal(gameNumber: string) {
             const forceSyncBtn = document.getElementById('force-sync-cards-btn');
             const globalStatusEl = document.getElementById('global-connection-status');
 
-            if (appStore.state.appConfig.onlineSyncEnabled && !auth?.currentUser) {
+            if (appStore.state.appConfig.onlineSyncEnabled && !session.auth?.currentUser) {
                 if (statusEl) {
                     statusEl.classList.remove('hidden');
                     statusEl.className = 'mt-2 text-sm text-center p-2 rounded max-w-sm ml-auto mr-auto break-all bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-200';
@@ -9553,9 +9533,9 @@ function showRoundEditModal(gameNumber: string) {
             
             if (statusEl) {
                 statusEl.classList.remove('hidden');
-                if (eventId) {
+                if (session.eventId) {
                     statusEl.classList.add('bg-green-100', 'text-green-800', 'border', 'border-green-300', 'dark:bg-green-900', 'dark:text-green-200');
-                    statusEl.innerHTML = `✅ Sincronizado. Jogadores online.<br/><strong>ID:</strong> ${eventId}`;
+                    statusEl.innerHTML = `✅ Sincronizado. Jogadores online.<br/><strong>ID:</strong> ${session.eventId}`;
                     if (forceSyncBtn && Object.keys(appStore.state.cardsData).length > 0) {
                         forceSyncBtn.classList.remove('hidden');
                     }
@@ -9569,14 +9549,14 @@ function showRoundEditModal(gameNumber: string) {
             if (globalStatusEl) {
                  if (appStore.state.appConfig.onlineSyncEnabled) {
                      globalStatusEl.classList.remove('hidden');
-                     if (eventId) {
+                     if (session.eventId) {
                          globalStatusEl.className = 'flex items-center justify-center p-2 rounded-full shadow-lg bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-sm font-bold font-mono text-center px-6 border-2 border-green-400 dark:border-green-600 cursor-pointer hover:bg-green-200 dark:hover:bg-green-800 transition-colors';
                          globalStatusEl.innerHTML = `✅ Modo Online`;
                          globalStatusEl.onclick = () => {
-                             navigator.clipboard.writeText(eventId).then(() => {
-                                 showAlert(`ID do Evento copiado para a área de transferência:\n${eventId}\n\nAtenção: Apenas os jogos e configurações são exportadas para a Nuvem. Imagens de patrocinadores e logos não são sincronizados na Nuvem.\n\nPara exportar tudo em alta definição (incluindo imagens), vá em "Opções do Programa" e salve o Backup (JSON) no seu computador!`);
+                             navigator.clipboard.writeText(session.eventId).then(() => {
+                                 showAlert(`ID do Evento copiado para a área de transferência:\n${session.eventId}\n\nAtenção: Apenas os jogos e configurações são exportadas para a Nuvem. Imagens de patrocinadores e logos não são sincronizados na Nuvem.\n\nPara exportar tudo em alta definição (incluindo imagens), vá em "Opções do Programa" e salve o Backup (JSON) no seu computador!`);
                              }).catch(() => {
-                                 showAlert(`O ID do Evento é:\n${eventId}`);
+                                 showAlert(`O ID do Evento é:\n${session.eventId}`);
                              });
                          };
                      } else {
@@ -9590,7 +9570,7 @@ function showRoundEditModal(gameNumber: string) {
         }
 
         async function initFirebaseSync() {
-            if (!auth || !db) return;
+            if (!session.auth || !session.db) return;
             if (!appStore.state.appConfig.onlineSyncEnabled) return;
             
             if (!appStore.state.appConfig.eventId) {
@@ -9605,7 +9585,7 @@ function showRoundEditModal(gameNumber: string) {
             if (appStore.state.appConfig.eventId) {
                 safeLocalStorage.setItem('bingo_persistent_event_id', appStore.state.appConfig.eventId);
             }
-            eventId = appStore.state.appConfig.eventId;
+            session.eventId = appStore.state.appConfig.eventId;
             
             updateSyncStatusUI();
 
@@ -9614,8 +9594,8 @@ function showRoundEditModal(gameNumber: string) {
                 (appStore as any).debouncedFirebaseSync(true);
             }
 
-            onAuthStateChanged(auth, async (user) => {
-                firebaseUser = user;
+            onAuthStateChanged(session.auth, async (user) => {
+                session.firebaseUser = user;
                 updateSyncStatusUI();
                 
                 // Trigger a sync
@@ -9630,7 +9610,6 @@ function showRoundEditModal(gameNumber: string) {
         }
 
         // --- PWA Auto Update & Manual Check Logic ---
-        let globalUpdateSW: ((reloadPage?: boolean) => Promise<void>) | null = null;
 
         function showSystemUpdateModal(onUpdateNow?: () => void) {
             let modal = document.getElementById('system-update-modal');
@@ -9730,7 +9709,7 @@ function showRoundEditModal(gameNumber: string) {
                 if (updateDetected) {
                     toast.remove();
                     showSystemUpdateModal(() => {
-                        if (globalUpdateSW) globalUpdateSW(true);
+                        if (session.globalUpdateSW) session.globalUpdateSW(true);
                         else window.location.reload();
                     });
                     return;
@@ -9815,29 +9794,28 @@ function showRoundEditModal(gameNumber: string) {
                         console.warn('Service worker registration failed:', error);
                     }
                 });
-                globalUpdateSW = updateSW;
+                session.globalUpdateSW = updateSW;
             }
         } catch (e) {
             console.warn('Service worker registration skipped:', e);
         }
 
         // --- PWA Installation Logic ---
-        let deferredPrompt: any;
 
         window.addEventListener('beforeinstallprompt', (e) => {
             try {
                 e.preventDefault();
-                deferredPrompt = e;
+                session.deferredPrompt = e;
                 const installBtn = document.getElementById('install-pwa-btn');
                 if (installBtn && window.self === window.top) {
                     installBtn.classList.remove('hidden');
                     installBtn.addEventListener('click', async () => {
                         installBtn.classList.add('hidden');
-                        if (deferredPrompt) {
-                            deferredPrompt.prompt();
-                            const { outcome } = await deferredPrompt.userChoice;
+                        if (session.deferredPrompt) {
+                            session.deferredPrompt.prompt();
+                            const { outcome } = await session.deferredPrompt.userChoice;
                             console.log(`User response to the install prompt: ${outcome}`);
-                            deferredPrompt = null;
+                            session.deferredPrompt = null;
                         }
                     });
                 }
