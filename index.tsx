@@ -158,7 +158,7 @@ const appStore = {
                     drawnTextStrokeColor: '#000000',
                     drawnTextStrokeWidth: 2,
                     isEventClosed: false,
-                    appName: 'Bingo Show',
+                    appName: 'PrêmioShow',
                     customLogoBase64: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICAgIDxkZWZzPgogICAgICAgIDwhLS0gQmFja2dyb3VuZCBHcmFkaWVudCAtLT4KICAgICAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnR3JhZCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgICAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMxZTFiNGIiLz4KICAgICAgICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiMzMTJlODEiLz4KICAgICAgICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNDMzOGNhIi8+CiAgICAgICAgPC9saW5lYXJHcmFkaWVudD4KICAgICAgICAKICAgICAgICA8IS0tIEdvbGRlbiBUZXh0IEdyYWRpZW50IC0tPgogICAgICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZ29sZEdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMCUiIHkyPSIxMDAlIj4KICAgICAgICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZlZjA4YSIvPgogICAgICAgICAgICA8c3RvcCBvZmZzZXQ9IjQwJSIgc3RvcC1jb2xvcj0iI2ZiYmYyNCIvPgogICAgICAgICAgICA8c3RvcCBvZmZzZXQ9IjYwJSIgc3RvcC1jb2xvcj0iI2Q5NzcwNiIvPgogICAgICAgICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNiNDUzMDkiLz4KICAgICAgICA8L2xpbmVhckdyYWRpZW50PgoKICAgICAgICA8bGluZWFyR3JhZGllbnQgaWQ9InJlZEdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICAgICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZWY0NDQ0Ii8+CiAgICAgICAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzk5MWIxYiIvPgogICAgICAgIDwvbGluZWFyR3JhZGllbnQ+CgogICAgICAgIDwhLS0gRHJvcCBTaGFkb3dzIC0tPgogICAgICAgIDxmaWx0ZXIgaWQ9ImRyb3BTaGFkb3ciIHg9Ii0yMCUiIHk9Ii0yMCUiIHdpZHRoPSIxNDAlIiBoZWlnaHQ9IjE0MCUiPgogICAgICAgICAgICA8ZmVEcm9wU2hhZG93IGR4PSIwIiBkeT0iMTIiIHN0ZERldmlhdGlvbj0iMTAiIGZsb29kLW9wYWNpdHk9IjAuOCIgZmxvb2QtY29sb3I9IiMwMDAiLz4KICAgICAgICA8L2ZpbHRlcj4KICAgICAgICA8ZmlsdGVyIGlkPSJnbG93IiB4PSItNTAlIiB5PSItNTAlIiB3aWR0aD0iMjAwJSIgaGVpZ2h0PSIyMDAlIj4KICAgICAgICAgICAgPGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iOCIgcmVzdWx0PSJibHVyIi8+CiAgICAgICAgICAgIDxmZU1lcmdlPgogICAgICAgICAgICAgICAgPGZlTWVyZ2VOb2RlIGluPSJibHVyIi8+CiAgICAgICAgICAgICAgICA8ZmVNZXJnZU5vZGUgaW49IlNvdXJjZUdyYXBoaWMiLz4KICAgICAgICAgICAgPC9mZU1lcmdlPgogICAgICAgIDwvZmlsdGVyPgogICAgICAgIDxmaWx0ZXIgaWQ9InRleHRHbG93IiB4PSItNTAlIiB5PSItNTAlIiB3aWR0aD0iMjAwJSIgaGVpZ2h0PSIyMDAlIj4KICAgICAgICAgICAgPGZlRHJvcFNoYWRvdyBkeD0iMCIgZHk9IjgiIHN0ZERldmlhdGlvbj0iNiIgZmxvb2Qtb3BhY2l0eT0iMC45IiBmbG9vZC1jb2xvcj0iIzAwMCIvPgogICAgICAgIDwvZmlsdGVyPgogICAgPC9kZWZzPgoKICAgIDwhLS0gQmFja2dyb3VuZCBCYXNlIC0tPgogICAgPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSIxMDAiIGZpbGw9InVybCgjYmdHcmFkKSIgZmlsdGVyPSJ1cmwoI2Ryb3BTaGFkb3cpIi8+CiAgICAKICAgIDwhLS0gRGVjb3JhdGl2ZSBPdXRsaW5lIC0tPgogICAgPHJlY3Qgd2lkdGg9IjQ3MiIgaGVpZ2h0PSI0NzIiIHg9IjIwIiB5PSIyMCIgcng9IjgwIiBmaWxsPSJub25lIiBzdHJva2U9InVybCgjZ29sZEdyYWQpIiBzdHJva2Utd2lkdGg9IjgiIHN0cm9rZS1kYXNoYXJyYXk9IjIwIDEwIiBvcGFjaXR5PSIwLjYiLz4KCiAgICA8IS0tIExpZ2h0IFJheXMgLyBTdGFyYnVyc3QgLS0+CiAgICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyNTYsIDIyMCkiPgogICAgICAgIDxwYXRoIGQ9Ik0wIC0xNTAgTDEwIDAgTDAgMTUwIEwtMTAgMCBaIiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjEiIHRyYW5zZm9ybT0icm90YXRlKDApIi8+CiAgICAgICAgPHBhdGggZD0iTTAgLTE1MCBMMTAgMCBMMCAxNTAgTC0xMCAwIFoiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMSIgdHJhbnNmb3JtPSJyb3RhdGUoNDUpIi8+CiAgICAgICAgPHBhdGggZD0iTTAgLTE1MCBMMTAgMCBMMCAxNTAgTC0xMCAwIFoiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMSIgdHJhbnNmb3JtPSJyb3RhdGUoOTApIi8+CiAgICAgICAgPHBhdGggZD0iTTAgLTE1MCBMMTAgMCBMMCAxNTAgTC0xMCAwIFoiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuMSIgdHJhbnNmb3JtPSJyb3RhdGUoMTM1KSIvPgogICAgPC9nPgoKICAgIDwhLS0gQ2VudGVyIEJpbmdvIEJhbGwgLS0+CiAgICA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyMjAiIHI9IjEzMCIgZmlsbD0idXJsKCNyZWRHcmFkKSIgZmlsdGVyPSJ1cmwoI2Ryb3BTaGFkb3cpIi8+CiAgICAKICAgIDwhLS0gQmFsbCBJbm5lciBoaWdobGlnaHQgLS0+CiAgICA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyMjAiIHI9IjEzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjQiIG9wYWNpdHk9IjAuMyIvPgogICAgCiAgICA8IS0tIFdoaXRlIENpcmNsZSBjZW50ZXIgLS0+CiAgICA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyMjAiIHI9IjgwIiBmaWxsPSIjZmZmZmZmIiBmaWx0ZXI9InVybCgjZHJvcFNoYWRvdykiLz4KICAgIAogICAgPCEtLSBTdGFyIERldGFpbHMgb24gdGhlIGJhbGwgLS0+CiAgICA8cGF0aCBkPSJNIDE3MCAxNTAgTCAxODAgMTcwIEwgMjAwIDE3MCBMIDE4MCAxODUgTCAxODUgMjA1IEwgMTcwIDE5MCBMIDE1NSAyMDUgTCAxNjAgMTg1IEwgMTQwIDE3MCBMIDE2MCAxNzAgWiIgZmlsbD0idXJsKCNnb2xkR3JhZCkiIC8+CiAgICA8cGF0aCBkPSJNIDM0MCAxNTAgTCAzNTAgMTcwIEwgMzcwIDE3MCBMIDM1MCAxODUgTCAzNTUgMjA1IEwgMzQwIDE5MCBMIDMyNSAyMDUgTCAzMzAgMTg1IEwgMzEwIDE3MCBMIDMzMCAxNzAgWiIgZmlsbD0idXJsKCNnb2xkR3JhZCkiIC8+CgogICAgPCEtLSBCaWcgTnVtYmVyIG9yIEIgLS0+CiAgICA8dGV4dCB4PSIyNTYiIHk9IjI3MCIgZm9udC1mYW1pbHk9IidJbXBhY3QnLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0MCIgZm9udC13ZWlnaHQ9IjkwMCIgZmlsbD0iI2I5MWMxYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zdHlsZT0iaXRhbGljIj5CPC90ZXh0PgoKICAgIDwhLS0gQklOR08gVGV4dCAtLT4KICAgIDx0ZXh0IHg9IjI1NiIgeT0iNDQwIiBmb250LWZhbWlseT0iJ0FyaWFsIEJsYWNrJywgSW1wYWN0LCBzYW5zLXNlcmlmIiBmb250LXNpemU9Ijg1IiBmb250LXdlaWdodD0iOTAwIiBmb250LXN0eWxlPSJpdGFsaWMiIGZpbGw9InVybCgjZ29sZEdyYWQpIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWx0ZXI9InVybCgjdGV4dEdsb3cpIiBzdHJva2U9IiM3ODM1MGYiIHN0cm9rZS13aWR0aD0iNCIgbGV0dGVyLXNwYWNpbmc9IjQiPkJJTkdPPC90ZXh0PgogICAgCiAgICA8IS0tIFNIT1cgVGV4dCAtLT4KICAgIDx0ZXh0IHg9IjI1NiIgeT0iNDkwIiBmb250LWZhbWlseT0iJ0FyaWFsIEJsYWNrJywgSW1wYWN0LCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjQ1IiBmb250LXdlaWdodD0iOTAwIiBmb250LXN0eWxlPSJpdGFsaWMiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbHRlcj0idXJsKCN0ZXh0R2xvdykiIGxldHRlci1zcGFjaW5nPSIxMiI+U0hPVzwvdGV4dD4KCjwvc3ZnPg==',
                     enableSponsorsByNumber: false,
                     enableSoundEffects: true,
@@ -454,6 +454,12 @@ const appStore = {
                     loadedConfig.customLogoBase64 = loadedConfig.customLogo;
                 }
                 
+                // Migração: o programa passou de "Bingo Show" para "PrêmioShow".
+                // Só troca o nome padrão antigo; nomes personalizados ficam como estão.
+                if (loadedConfig.appName === 'Bingo Show') {
+                    loadedConfig.appName = 'PrêmioShow';
+                }
+
                 if (loadedConfig.boardColor === undefined || loadedConfig.boardColor === '') {
                     loadedConfig.boardColor = 'default';
                 }
@@ -979,7 +985,7 @@ function renderCustomLogo() {
     }
 
     // Inserção no DOM
-    headerLogoContainer.innerHTML = `<img id="header-logo" src="${currentLogo}" alt="Bingo Show Logo" class="w-full h-full object-contain filter drop-shadow-lg scale-110 active:scale-95 transition-transform duration-300">`;
+    headerLogoContainer.innerHTML = `<img id="header-logo" src="${currentLogo}" alt="PrêmioShow Logo" class="w-full h-full object-contain filter drop-shadow-lg scale-110 active:scale-95 transition-transform duration-300">`;
     
     // Atualização do preview nas configurações (se aberto)
     const settingsPreview = document.getElementById('custom-logo-preview') as HTMLImageElement;
@@ -1598,7 +1604,7 @@ function populateSettingsShortcutsTab() {
                         <div id="tab-content-appearance" class="space-y-6 text-left">
                            <div class="border-b border-gray-700 pb-6">
                                 <label class="block text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">Nome do Programa</label>
-                                <input type="text" id="app-name-input" class="w-full bg-white dark:bg-gray-800 text-slate-800 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-indigo-500" placeholder="Bingo Show">
+                                <input type="text" id="app-name-input" class="w-full bg-white dark:bg-gray-800 text-slate-800 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-indigo-500" placeholder="PrêmioShow">
                            </div>
                            <div class="border-b border-gray-700 pb-6">
                                 <label class="block text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">${appLabels.settingsLogoTitle}</label>
@@ -1736,7 +1742,7 @@ function populateSettingsShortcutsTab() {
                                 </div>
                                 <!-- DEV PIX SETTINGS -->
                                 <div class="border border-emerald-300 dark:border-emerald-700 p-4 rounded-xl space-y-4 mt-4">
-                                    <h4 class="font-bold text-emerald-600 dark:text-emerald-400">Doação para o Projeto Bingo Show (Programador)</h4>
+                                    <h4 class="font-bold text-emerald-600 dark:text-emerald-400">Doação para o Projeto PrêmioShow (Programador)</h4>
                                     <div>
                                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Chave PIX do Desenvolvedor</label>
                                         <input type="text" id="dev-pix-key-input" class="w-full bg-white dark:bg-gray-800 text-slate-800 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 text-sm font-mono" placeholder="Ex: e-mail ou chave aleatória">
@@ -2254,7 +2260,7 @@ function generateProof(selectedGameKeys: string[], signerName: string = '') {
             <div class="header">
                 ${appConfig.customLogoBase64 ? `<img src="${appConfig.customLogoBase64}" class="logo" alt="Logo do Evento">` : ''}
                 <h1>${appConfig.bingoTitle}</h1>
-                <p class="subtitle">Relatório Oficial de Resultados<br>Gerado em: ${new Date().toLocaleString('pt-BR')}<br>Sistema: ${appConfig.appName || 'Bingo Show'}</p>
+                <p class="subtitle">Relatório Oficial de Resultados<br>Gerado em: ${new Date().toLocaleString('pt-BR')}<br>Sistema: ${appConfig.appName || 'PrêmioShow'}</p>
             </div>
     `;
 
@@ -3575,7 +3581,7 @@ function showSettingsModal() {
 
     // --- Appearance Tab ---
     const appNameInput = document.getElementById('app-name-input') as HTMLInputElement;
-    appNameInput.value = appConfig.appName || 'Bingo Show';
+    appNameInput.value = appConfig.appName || 'PrêmioShow';
     appNameInput.addEventListener('input', (e) => {
         appStore.state.appConfig.appName = (e.target as HTMLInputElement).value;
         renderAppName();
@@ -4260,7 +4266,7 @@ function applyAuctionZoom(scale: number) {
         }
 
         function updateProgramTitle() {
-            document.title = "Bingo Show";
+            document.title = "PrêmioShow";
         }
 
         function applyTheme() {
@@ -4276,7 +4282,7 @@ function applyAuctionZoom(scale: number) {
         }
 
         function renderAppName() {
-            const mainTitle = appStore.state.appConfig.appName || `Bingo Show`;
+            const mainTitle = appStore.state.appConfig.appName || `PrêmioShow`;
             DOMElements.mainTitle.innerHTML = `<span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 [-webkit-text-stroke:2px_#78350f] filter drop-shadow-lg">${mainTitle}</span><span id="subtitle-version" class="block mt-2 text-lg sm:text-xl md:text-2xl text-amber-100 font-semibold tracking-normal normal-case [-webkit-text-stroke:1px_#78350f] drop-shadow-md pb-2"></span>`;
         }
         
@@ -4586,7 +4592,7 @@ function applyAuctionZoom(scale: number) {
                                         const loadedState = JSON.parse(result);
                     
                     if (!loadedState.gamesData || !loadedState.appConfig) {
-                         throw new Error("O arquivo selecionado não parece ser um backup válido do Bingo Show.");
+                         throw new Error("O arquivo selecionado não parece ser um backup válido do PrêmioShow.");
                     }
 
                     const currentEventId = appStore.state.appConfig.eventId;
@@ -9245,7 +9251,7 @@ function showRoundEditModal(gameNumber: string) {
             document.body.innerHTML = `
                 <div class="fixed top-0 left-0 w-full p-4 bg-slate-800 shadow-md flex justify-between items-center z-10">
                     <div class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-300 to-yellow-500" id="digital-app-name">
-                        Bingo Show
+                        PrêmioShow
                     </div>
                     <div class="text-sm text-slate-400">Cartela ${cardData.series}</div>
                 </div>
@@ -9376,7 +9382,7 @@ function showRoundEditModal(gameNumber: string) {
                         onSnapshot(doc(db, "events", cardEventId), (docSnap) => {
                            if (docSnap.exists()) {
                                const eventData = docSnap.data();
-                               document.getElementById('digital-app-name')!.textContent = eventData.appName || "Bingo Show";
+                               document.getElementById('digital-app-name')!.textContent = eventData.appName || "PrêmioShow";
                                if (eventData.bingoTitle) {
                                    document.getElementById('digital-bingo-title')!.textContent = eventData.bingoTitle;
                                }
@@ -9513,7 +9519,7 @@ function showRoundEditModal(gameNumber: string) {
                     }
                 }
             }).catch(err => {
-                console.error("Erro na inicialização do Bingo Show:", err);
+                console.error("Erro na inicialização do PrêmioShow:", err);
             });
         }
 
@@ -9639,7 +9645,7 @@ function showRoundEditModal(gameNumber: string) {
                     <div class="w-16 h-16 bg-sky-100 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner animate-bounce">
                         🚀
                     </div>
-                    <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-2">Atualizando o Bingo Show...</h2>
+                    <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-2">Atualizando o PrêmioShow...</h2>
                     <p class="text-slate-600 dark:text-slate-300 text-sm mb-6 leading-relaxed">
                         Uma nova versão foi detectada e o sistema está sendo atualizado automaticamente para garantir que você utilize sempre a versão mais recente e sem falhas.
                     </p>
@@ -9679,7 +9685,7 @@ function showRoundEditModal(gameNumber: string) {
                 <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 <div>
                     <p class="font-bold">Verificando Atualizações...</p>
-                    <p class="text-xs text-indigo-200">Consultando o servidor para novas versões do Bingo Show.</p>
+                    <p class="text-xs text-indigo-200">Consultando o servidor para novas versões do PrêmioShow.</p>
                 </div>
             `;
             toast.classList.remove('hidden');
@@ -9737,7 +9743,7 @@ function showRoundEditModal(gameNumber: string) {
                         toast.innerHTML = `
                             <span class="text-2xl">✅</span>
                             <div>
-                                <p class="font-bold">O Bingo Show está 100% Atualizado!</p>
+                                <p class="font-bold">O PrêmioShow está 100% Atualizado!</p>
                                 <p class="text-xs text-emerald-100">Versão v${currentVersion} em execução com todos os recursos mais recentes.</p>
                             </div>
                             <button class="ml-2 text-white/80 hover:text-white font-bold text-lg leading-none cursor-pointer" onclick="this.parentElement.remove()">✕</button>
@@ -9772,7 +9778,7 @@ function showRoundEditModal(gameNumber: string) {
                 toast.innerHTML = `
                     <span class="text-xl">🎉</span>
                     <div class="text-xs sm:text-sm">
-                        <p class="font-bold">Bingo Show Atualizado para a v${currentVersion}!</p>
+                        <p class="font-bold">PrêmioShow Atualizado para a v${currentVersion}!</p>
                         <p class="text-sky-100 text-[11px]">Você está utilizando a versão mais recente do sistema.</p>
                     </div>
                     <button class="ml-2 text-white/80 hover:text-white font-black text-lg leading-none cursor-pointer" onclick="this.parentElement.remove()">✕</button>

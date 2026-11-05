@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Regras de segurança do Bingo Show.
+// Regras de segurança do PrêmioShow.
 //
 // Princípios:
 //  - Qualquer pessoa (inclusive sem login) pode LER um evento, suas rodadas e

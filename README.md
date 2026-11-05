@@ -1,4 +1,4 @@
-# Bingo Show
+# PrêmioShow
 
 Programa para conduzir **Shows de Prêmios (bingo)** em paróquias, quermesses e organizações beneficentes. Funciona no navegador, pode ser instalado como aplicativo (PWA) e sincroniza em tempo real, via Firebase, o painel de quem apresenta com a tela que o público acompanha.
 

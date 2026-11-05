@@ -141,7 +141,7 @@ async function initializeAttendeeApp() {
 
 
     if (!targetEventId) {
-        showFatalError('Para acompanhar o sorteio ao vivo pelo Painel do Público, abra o Painel Principal do Bingo Show e clique em "Ao Vivo" ou escaneie o QR Code exibido na tela.');
+        showFatalError('Para acompanhar o sorteio ao vivo pelo Painel do Público, abra o Painel Principal do PrêmioShow e clique em "Ao Vivo" ou escaneie o QR Code exibido na tela.');
         return;
     }
 
@@ -450,7 +450,7 @@ async function initializeAttendeeApp() {
 
     function handleEventSnapshotData(eventData: any) {
         if (!eventData) {
-            waitingAppName.textContent = 'Bingo Show';
+            waitingAppName.textContent = 'PrêmioShow';
             waitingTitle.textContent = 'Aguardando Início';
             waitingMessage.textContent = 'Conectado à sala! Aguardando o organizador iniciar a primeira rodada...';
             contentContainer.classList.add('hidden');
@@ -474,7 +474,7 @@ async function initializeAttendeeApp() {
                     const state = JSON.parse(eventData.fullStateJSON);
                     const config = state.appConfig;
                     (window as any).currentConfig = config;
-                    waitingAppName.textContent = config.bingoTitle || 'Bingo Show';
+                    waitingAppName.textContent = config.bingoTitle || 'PrêmioShow';
                     if (config.customLogoBase64) {
                         waitingLogo.src = config.customLogoBase64;
                         waitingLogo.classList.remove('hidden');

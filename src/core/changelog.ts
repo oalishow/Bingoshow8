@@ -1,5 +1,6 @@
 // Histórico de versões do app (valor inicial de appStore.state.versionHistory).
 export const versionHistory = `**v8.0 (Atual)**
+- **NOVO NOME: PRÊMIOSHOW:** O programa passa a se chamar PrêmioShow. Quem usava o nome padrão "Bingo Show" recebe o novo nome automaticamente; nomes personalizados de evento são mantidos.
 - **NOVO JOGO TOTAL & REINICIALIZAÇÃO LIMPA:** Ao iniciar um Novo Jogo, todos os dados da partida anterior (números sorteados, ganhadores, cartelas, histórico e patrocinadores) são completamente apagados de maneira segura, garantindo um novo início 100% limpo.
 - **ESTADO INICIAL SEM RODADA SELECIONADA:** Ao resetar ou iniciar uma nova partida, a Rodada 1 não fica mais marcada como "Jogando..." por padrão. O painel inicia no estado neutro "Selecione uma Rodada", permitindo ao operador escolher e iniciar a rodada desejada manualmente.
 

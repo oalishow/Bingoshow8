@@ -110,9 +110,9 @@ export default defineConfig(({ mode }) => {
           },
           includeAssets: ['favicon.ico', 'favicon.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-512x512-maskable.png', 'icon.svg'],
           manifest: {
-            name: 'Bingo Show',
-            short_name: 'Bingo Show',
-            description: 'Aplicativo de Bingo Show',
+            name: 'PrêmioShow',
+            short_name: 'PrêmioShow',
+            description: 'Show de prêmios para paróquias e comunidades',
             theme_color: '#4f46e5',
             background_color: '#1e1b4b',
             display: 'standalone',
