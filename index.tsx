@@ -13,6 +13,7 @@ import { sounds } from './audio';
 import { DEFAULT_LOGO, isLegacyDefaultLogo, migrateLogo } from './src/core/logo';
 import { versionHistory } from './src/core/changelog';
 import { session } from './src/core/session';
+import { protectPasswordForCloud, checkCloudEventPassword } from './src/core/eventPassword';
 import { currentVersion, buildInfo, DYNAMIC_LETTERS, DYNAMIC_LETTERS_AJUDE, BINGO_CONFIG, roundColors, predefinedPrizes, winnerDisplayDuration } from './src/core/constants';
 
 
@@ -609,6 +610,8 @@ const appStore = {
                             if (stateToStore.appConfig.sponsorEditorReusableBg) {
                                 delete stateToStore.appConfig.sponsorEditorReusableBg;
                             }
+                            // A senha do evento nunca vai em texto para a nuvem (os dados são públicos por ID).
+                            await protectPasswordForCloud(stateToStore.appConfig, session.eventId);
                         }
                         
                         eventData.fullStateJSON = JSON.stringify(stateToStore);
@@ -8993,15 +8996,21 @@ function showRoundEditModal(gameNumber: string) {
                                     const data = docSnap.data();
                                     if (data.fullStateJSON) {
                                         const parsedState = JSON.parse(data.fullStateJSON);
-                                        const requiredPassword = parsedState.appConfig?.eventPassword;
                                         const providedPassword = (document.getElementById('cloud-event-password-input') as HTMLInputElement)?.value.trim() || '';
-                                        if (requiredPassword && requiredPassword !== providedPassword) {
+                                        const passwordOk = await checkCloudEventPassword(parsedState.appConfig, eventIdToLoad, providedPassword);
+                                        if (!passwordOk) {
                                             showAlert("Senha incorreta ou não fornecida para este evento.");
                                             spinner?.classList.add('hidden');
                                             if (btn) btn.disabled = false;
                                             return;
                                         }
                                         
+                                        const hadPassword = !!(parsedState.appConfig?.eventPasswordHash || parsedState.appConfig?.eventPassword);
+                                        if (parsedState.appConfig) {
+                                            delete parsedState.appConfig.eventPasswordHash;
+                                            // Guarda a senha conferida neste painel, para a próxima sincronização manter a proteção.
+                                            parsedState.appConfig.eventPassword = hadPassword ? providedPassword : '';
+                                        }
                                         appStore.loadStateFromObject(parsedState);
                                         appStore.state.appConfig.eventId = eventIdToLoad;
                                         appStore.state.appConfig.onlineSyncEnabled = true;
@@ -9353,18 +9362,9 @@ function showRoundEditModal(gameNumber: string) {
 
             // Realtime Sync Logic (Listen to Event and Games)
             if (cardEventId) {
-                // Anonymous sign-in for players
-                onAuthStateChanged(session.auth, async (user) => {
-                    if (!user) {
-                        try {
-                            // await signInAnonymously(auth);
-                        } catch(e: any) {
-                            console.warn("Auth falhou online", e);
-                            document.body.innerHTML += `<div class="fixed top-0 left-0 w-full p-4 bg-red-600 text-white font-bold text-center z-50 shadow-lg">
-                                ⚠️ Erro de nuvem: O organizador não ativou a permissão de "Login Anônimo" no banco de dados. O bingo não funcionará online.
-                            </div>`;
-                        }
-                    } else {
+                // As regras do Firestore liberam a leitura do evento e das rodadas sem login,
+                // então a cartela digital acompanha o sorteio mesmo sem o jogador entrar.
+                {
                         let lastActiveGame = '';
                         // Watch event
                         onSnapshot(doc(session.db, "events", cardEventId), (docSnap) => {
@@ -9430,9 +9430,12 @@ function showRoundEditModal(gameNumber: string) {
                                }
                                }
                            }
+                        }, (err) => {
+                            console.warn("[Cartela digital] Falha ao acompanhar o evento:", err);
+                            const statusBanner = document.getElementById('realtime-status-banner');
+                            if (statusBanner) statusBanner.innerHTML = `⚠️ Sem conexão com o sorteio online. Você ainda pode marcar a cartela tocando nos números.`;
                         });
-                    }
-                });
+                }
             }
         }
 
