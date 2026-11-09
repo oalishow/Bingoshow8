@@ -5497,12 +5497,19 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                 return;
             }
             
-            listEl.innerHTML = appStore.state.blockedUsers.map((uuid: string) => `
-                <div class="flex justify-between items-center bg-gray-100 dark:bg-gray-700 p-3 rounded">
-                    <span class="text-sm font-mono text-gray-800 dark:text-gray-200">${uuid}</span>
-                    <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-xs font-bold" onclick="window.unblockUser('${uuid}')">Desbloquear</button>
-                </div>
-            `).join('');
+            listEl.replaceChildren(...appStore.state.blockedUsers.map((uuid: string) => {
+                const row = document.createElement('div');
+                row.className = 'flex justify-between items-center bg-gray-100 dark:bg-gray-700 p-3 rounded';
+                const label = document.createElement('span');
+                label.className = 'text-sm font-mono text-gray-800 dark:text-gray-200';
+                label.textContent = uuid;
+                const unblockBtn = document.createElement('button');
+                unblockBtn.className = 'bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-xs font-bold';
+                unblockBtn.textContent = 'Desbloquear';
+                unblockBtn.addEventListener('click', () => (window as any).unblockUser(uuid));
+                row.append(label, unblockBtn);
+                return row;
+            }));
         }
 
         ;(window as any).blockUser = (uuid: string) => {
@@ -5513,6 +5520,18 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                 (window as any).updateBlockedUsersUI();
             }
         };
+
+        // Identificadores aceitos em pedidos de bingo: letras, números, "-" e "_".
+        function isValidClaimUuid(uuid: unknown): uuid is string {
+            return typeof uuid === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(uuid);
+        }
+
+        // 123.456.789-09 vira ***.456.789-**
+        function maskCpf(cpf: unknown): string {
+            const digits = String(cpf ?? '').replace(/\D/g, '');
+            if (digits.length !== 11) return digits ? '***' : 'não informado';
+            return `***.${digits.slice(3, 6)}.${digits.slice(6, 9)}-**`;
+        }
 
         function showBingoClaimNotification(series: number, uuid: string, gameNumber: string, docData?: any) {
             const audio = new Audio('/bingo-alert.mp3');
@@ -5534,33 +5553,61 @@ Deseja MANTER o seu QR Code/Link atual para o público?
             const el = document.createElement('div');
             el.className = 'pointer-events-auto bg-green-500 text-white font-bold p-4 w-full rounded-xl shadow-2xl flex flex-col gap-2 animate-bounce-in border-4 border-white';
             
+            // Os dados do pedido (nome, CPF, identificador) vêm do público e nunca
+            // entram como HTML: tudo é montado com textContent e eventos de verdade.
+            const mk = (tag: string, className: string, text = '') => {
+                const node = document.createElement(tag);
+                node.className = className;
+                node.textContent = text;
+                return node;
+            };
+            const header = mk('div', 'flex justify-between items-center w-full');
+            header.append(mk('span', 'text-[10px] uppercase bg-black/20 px-2 py-0.5 rounded tracking-widest',
+                isPublic ? 'Alerta de Jogador Online (Painel)' : 'Alerta de Jogador Online'));
+            const closeBtn = mk('button', 'text-white hover:text-gray-200', '✕');
+            closeBtn.addEventListener('click', () => el.remove());
+            header.append(closeBtn);
+
+            const message = mk('div', 'text-lg text-center mx-1 mb-1 leading-tight');
+            const highlight = mk('span', 'bg-yellow-400 text-black px-2 py-1 mx-1 rounded inline-block shadow-sm');
+            const mainBtn = mk('button', 'bg-white text-green-700 hover:bg-gray-100 py-3 mt-1 w-full rounded-lg font-bold shadow uppercase transition-all active:scale-95');
+
+            el.append(header, mk('div', 'text-3xl font-black uppercase text-center mt-1 drop-shadow-md', 'BINGO!'), message);
+
             if (isPublic) {
-                const name = docData?.name || 'Público';
-                const cpf = docData?.cpf || '';
-                el.innerHTML = `
-                    <div class="flex justify-between items-center w-full">
-                        <span class="text-[10px] uppercase bg-black/20 px-2 py-0.5 rounded tracking-widest">Alerta de Jogador Online (Painel)</span>
-                        <button class="text-white hover:text-gray-200" onclick="this.parentElement.parentElement.remove()">✕</button>
-                    </div>
-                    <div class="text-3xl font-black uppercase text-center mt-1 drop-shadow-md">BINGO!</div>
-                    <div class="text-lg text-center mx-1 mb-1 leading-tight"><span class="bg-yellow-400 text-black px-2 py-1 mx-1 rounded inline-block shadow-sm">${name}</span> bateu pelo Painel Público!</div>
-                    <div class="text-xs text-center text-green-100 mb-2">CPF: ${cpf}</div>
-                    <button class="bg-white text-green-700 hover:bg-gray-100 py-3 mt-1 w-full rounded-lg font-bold shadow uppercase transition-all active:scale-95" onclick="this.parentElement.remove()">Verificar Física Manualmente</button>
-                    <button class="text-white hover:text-red-200 text-xs mt-1 underline" onclick="if(confirm('Bloquear este jogador? Ele não poderá mais gritar bingo.')) { window.blockUser('${uuid}'); this.parentElement.remove(); }">Bloquear Jogador (Falso Bingo)</button>
-                `;
+                highlight.textContent = String(docData?.name || 'Público').slice(0, 120);
+                message.append(highlight, ' bateu pelo Painel Público!');
+                // O alerta pode aparecer no telão: mostra só o meio do CPF.
+                // Um clique revela o número completo para a conferência.
+                const cpfLine = mk('div', 'text-xs text-center text-green-100 mb-2 cursor-pointer', `CPF: ${maskCpf(docData?.cpf)}`);
+                cpfLine.title = 'Clique para ver o CPF completo';
+                let cpfRevealed = false;
+                cpfLine.addEventListener('click', () => {
+                    cpfRevealed = !cpfRevealed;
+                    cpfLine.textContent = `CPF: ${cpfRevealed ? String(docData?.cpf || 'não informado').slice(0, 20) : maskCpf(docData?.cpf)}`;
+                });
+                el.append(cpfLine);
+                mainBtn.textContent = 'Verificar Física Manualmente';
+                mainBtn.addEventListener('click', () => el.remove());
             } else {
-                el.innerHTML = `
-                    <div class="flex justify-between items-center w-full">
-                        <span class="text-[10px] uppercase bg-black/20 px-2 py-0.5 rounded tracking-widest">Alerta de Jogador Online</span>
-                        <button class="text-white hover:text-gray-200" onclick="this.parentElement.parentElement.remove()">✕</button>
-                    </div>
-                    <div class="text-3xl font-black uppercase text-center mt-1 drop-shadow-md">BINGO!</div>
-                    <div class="text-lg text-center mx-1 mb-1 leading-tight">A cartela nº <span class="bg-yellow-400 text-black px-2 py-1 mx-1 rounded inline-block shadow-sm">${cardStr}</span> bateu lá do celular!</div>
-                    <button class="bg-white text-green-700 hover:bg-gray-100 py-3 mt-1 w-full rounded-lg font-bold shadow uppercase transition-all active:scale-95" onclick="window.pauseDrawAndVerify('${uuid}', '${cardStr}'); this.parentElement.remove()">Fazer Checagem Oficial</button>
-                    <button class="text-white hover:text-red-200 text-xs mt-1 underline" onclick="if(confirm('Bloquear este jogador? Ele não poderá mais gritar bingo.')) { window.blockUser('${uuid}'); this.parentElement.remove(); }">Bloquear Jogador (Falso Bingo)</button>
-                `;
+                highlight.textContent = cardStr;
+                message.append('A cartela nº ', highlight, ' bateu lá do celular!');
+                mainBtn.textContent = 'Fazer Checagem Oficial';
+                mainBtn.addEventListener('click', () => {
+                    (window as any).pauseDrawAndVerify(uuid, cardStr);
+                    el.remove();
+                });
             }
-            
+
+            const blockBtn = mk('button', 'text-white hover:text-red-200 text-xs mt-1 underline', 'Bloquear Jogador (Falso Bingo)');
+            blockBtn.addEventListener('click', () => {
+                if (confirm('Bloquear este jogador? Ele não poderá mais gritar bingo.')) {
+                    (window as any).blockUser(uuid);
+                    el.remove();
+                }
+            });
+            el.append(mainBtn, blockBtn);
+
             container.appendChild(el);
         }
         
@@ -5678,7 +5725,7 @@ Deseja MANTER o seu QR Code/Link atual para o público?
                    snapshot.docChanges().forEach((change) => {
                        if (change.type === 'added') {
                            const docData = change.doc.data();
-                           if (!appStore.state.blockedUsers.includes(docData.uuid)) {
+                           if (isValidClaimUuid(docData.uuid) && !appStore.state.blockedUsers.includes(docData.uuid)) {
                                showBingoClaimNotification(docData.series, docData.uuid, gameNumber, docData);
                            }
                        }

@@ -64,6 +64,7 @@ service cloud.firestore {
             && request.resource.data.keys().hasAll(['uuid', 'series', 'timestamp'])
             && request.resource.data.uuid is string
             && request.resource.data.uuid.size() <= 128
+            && request.resource.data.uuid.matches('^[A-Za-z0-9_-]+$')
             && request.resource.data.series is int
             && request.resource.data.timestamp is int
             && (!('name' in request.resource.data)
